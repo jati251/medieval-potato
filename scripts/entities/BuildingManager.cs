@@ -21,6 +21,24 @@ public partial class BuildingManager : Node3D
 		_ground = GetNode<Node3D>(GroundPath);
 		_camera = GetViewport().GetCamera3D();
 		_currentScene = HouseScene;
+		
+		// Initial Census: Move all pre-placed buildings to Layer 4 (bit mask 8)
+		CallDeferred(nameof(InitialCensus));
+	}
+
+	private void InitialCensus()
+	{
+		// Look through the scene for any nodes that might be pre-placed buildings
+		foreach (Node child in GetTree().CurrentScene.GetChildren())
+		{
+			if (child.Name.ToString().Contains("House") || 
+			    child.Name.ToString().Contains("Shop") || 
+			    child.Name.ToString().Contains("Guild") ||
+			    child.Name.ToString().Contains("Stable"))
+			{
+				SetCollisionLayerRecursively(child, 8);
+			}
+		}
 	}
 
 	public void SetBuildingType(string type)
@@ -80,8 +98,10 @@ public partial class BuildingManager : Node3D
 			var res = GetMouseWorldPosition();
 			if (res.Hit)
 			{
-				_previewHouse.GlobalPosition = res.Position;
-				// Visual feedback: red if steep, white/normal if flat
+				float groundY = GetGroundYAt(res.Position);
+				_previewHouse.GlobalPosition = new Vector3(res.Position.X, groundY, res.Position.Z);
+				
+				_previewHouse.GlobalRotation = Vector3.Zero; // Reset to avoid tilt
 				_previewHouse.Visible = res.Normal.Dot(Vector3.Up) > 0.9f;
 			}
 		}
@@ -113,7 +133,8 @@ public partial class BuildingManager : Node3D
 		Vector3 rayDirection = _camera.ProjectRayNormal(mousePos);
 		
 		var spaceState = GetWorld3D().DirectSpaceState;
-		var query = PhysicsRayQueryParameters3D.Create(rayOrigin, rayOrigin + rayDirection * 1000);
+		// Mask 8 corresponds to Layer 4 where our buildings are
+		var query = PhysicsRayQueryParameters3D.Create(rayOrigin, rayOrigin + rayDirection * 1000, 8);
 		var result = spaceState.IntersectRay(query);
 		
 		if (result.Count > 0)
@@ -179,31 +200,58 @@ public partial class BuildingManager : Node3D
 	{
 		if (_currentScene == null) return;
 
-		// Surface Check: Only build on FLAT surfaces (not walls!)
-		if (normal.Dot(Vector3.Up) < 0.9f)
-		{
-			GD.Print("Surface too steep for building!");
-			return;
-		}
+		// Surface Check
+		if (normal.Dot(Vector3.Up) < 0.9f) return;
 
 		// Map Border Check
 		if (Mathf.Abs(position.X) > 248 || Mathf.Abs(position.Z) > 248) return;
 
 		// Deep Water Check
-		if (IsPositionOnWater(position))
-		{
-			GD.Print("Cannot build on water!");
-			return;
-		}
+		if (IsPositionOnWater(position)) return;
 
 		var building = _currentScene.Instantiate<Node3D>();
 		GetTree().CurrentScene.AddChild(building);
 		
-		// Move to Layer 4 so future placements don't hit this building
-		SetCollisionLayerRecursively(building, 4);
+		// Move to Layer 4 (bit mask 8)
+		SetCollisionLayerRecursively(building, 8);
 		
-		building.GlobalPosition = position;
-		building.RotateY((float)GD.RandRange(0, Mathf.Pi * 2));
+		// Gravity Snap
+		float groundY = GetGroundYAt(position);
+		building.GlobalPosition = new Vector3(position.X, groundY - 0.01f, position.Z);
+		
+		// Force upright rotation and FREEZE physics
+		building.GlobalRotation = new Vector3(0, (float)GD.RandRange(0, Mathf.Pi * 2), 0);
+		FreezePhysicsRecursively(building);
+	}
+
+	private void FreezePhysicsRecursively(Node node)
+	{
+		if (node is RigidBody3D rb)
+		{
+			rb.Freeze = true;
+			rb.LinearVelocity = Vector3.Zero;
+			rb.AngularVelocity = Vector3.Zero;
+		}
+		foreach (Node child in node.GetChildren())
+		{
+			FreezePhysicsRecursively(child);
+		}
+	}
+
+	private float GetGroundYAt(Vector3 pos)
+	{
+		var spaceState = GetWorld3D().DirectSpaceState;
+		Vector3 from = pos + Vector3.Up * 10.0f;
+		Vector3 to = pos + Vector3.Down * 10.0f;
+		
+		var query = PhysicsRayQueryParameters3D.Create(from, to, 1); // Hit Ground/Hills
+		var result = spaceState.IntersectRay(query);
+		
+		if (result.Count > 0)
+		{
+			return ((Vector3)result["position"]).Y;
+		}
+		return pos.Y;
 	}
 
 	private void SetCollisionLayerRecursively(Node node, uint layer)
