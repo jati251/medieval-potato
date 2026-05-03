@@ -1,0 +1,56 @@
+using Godot;
+using System;
+
+public partial class AmbienceManager : Node
+{
+	[Export] public PackedScene PopScene { get; set; }
+	[Export] public NodePath RoadPath { get; set; }
+	[Export] public float BaseSpawnRate { get; set; } = 5.0f; // Seconds per spawn
+	
+	private Path3D _road;
+	private GlobalSimulation _sim;
+	private double _timeSinceLastSpawn = 0.0;
+
+	public override void _Ready()
+	{
+		_road = GetNode<Path3D>(RoadPath);
+		_sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
+	}
+
+	public override void _Process(double delta)
+	{
+		_timeSinceLastSpawn += delta;
+
+		// Calculate spawn rate based on population (higher pop = faster spawns)
+		float adjustedSpawnRate = BaseSpawnRate / Mathf.Max(1.0f, _sim.Population / 5.0f);
+
+		if (_timeSinceLastSpawn >= adjustedSpawnRate)
+		{
+			SpawnAmbiencePop();
+			_timeSinceLastSpawn = 0.0;
+		}
+	}
+
+	private void SpawnAmbiencePop()
+	{
+		if (PopScene == null || _road == null) return;
+
+		// 1. Create the pop
+		var pop = PopScene.Instantiate<VisualPop>();
+		GetTree().Root.AddChild(pop);
+		
+		// 2. Set start and end points from the Path3D
+		// For simplicity, we'll just use the first and last points of the curve
+		Curve3D curve = _road.Curve;
+		Vector3 startPos = _road.ToGlobal(curve.GetPointPosition(0));
+		Vector3 endPos = _road.ToGlobal(curve.GetPointPosition(curve.PointCount - 1));
+
+		pop.GlobalPosition = startPos;
+		
+		// 3. Randomize speed a bit for variety
+		pop.WalkSpeed = (float)GD.RandRange(1.5, 3.0);
+		
+		// 4. Send them walking
+		pop.WalkToAndBack(endPos);
+	}
+}

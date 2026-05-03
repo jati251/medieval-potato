@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/VisualPop.cs" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/potato.jpg" id="1_g3r2u"]
+
+[node name="root" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+texture = ExtResource("1_g3r2u")
+billboard = 1
+shaded = true
+pixel_size = 0.005

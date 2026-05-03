@@ -1,0 +1,17 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/ResidencePlot.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/entities/VisualPop.tscn" id="2_pop"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(2, 2, 2)
+
+[node name="root" type="Node3D"]
+script = ExtResource("1_script")
+PopScene = ExtResource("2_pop")
+
+[node name="HouseMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("BoxMesh_1")
+
+[node name="Timer" type="Timer" parent="."]

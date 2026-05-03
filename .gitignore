@@ -1,0 +1,14 @@
+# Godot-specific ignores
+.godot/
+*.import
+export.cfg
+export_presets.gdcfg
+
+# Mono-specific ignores
+.mono/
+bin/
+obj/
+
+# Build results
+*.pck
+*.exe
