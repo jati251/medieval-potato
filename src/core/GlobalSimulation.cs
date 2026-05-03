@@ -8,6 +8,7 @@ public partial class GlobalSimulation : Node
 
 	// --- Resources ---
 	[Export] public int Population { get; set; } = 0;
+	[Export] public int UnemployedPopulation { get; set; } = 0;
 	[Export] public float Food { get; set; } = 100.0f;
 	[Export] public float Wood { get; set; } = 100.0f;
 	
@@ -23,6 +24,21 @@ public partial class GlobalSimulation : Node
 	public void AddPopulation(int amount)
 	{
 		Population += amount;
+		UnemployedPopulation += amount;
+		EmitSignal(SignalName.SimulationTicked);
+	}
+
+	public int RequestWorkers(int amount)
+	{
+		int assigned = Mathf.Min(amount, UnemployedPopulation);
+		UnemployedPopulation -= assigned;
+		EmitSignal(SignalName.SimulationTicked);
+		return assigned;
+	}
+
+	public void ReturnWorkers(int amount)
+	{
+		UnemployedPopulation += amount;
 		EmitSignal(SignalName.SimulationTicked);
 	}
 

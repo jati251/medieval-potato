@@ -15,8 +15,6 @@ public partial class ResidencePlot : Node3D
 	private GlobalSimulation _sim;
 	private Node3D _visuals;
 	private Node3D _scaffolding;
-	private Label3D _statusLabel;
-	private List<VisualPop> _activePops = new List<VisualPop>();
 
 	public override void _Ready()
 	{
@@ -26,10 +24,9 @@ public partial class ResidencePlot : Node3D
 
 		_visuals = GetNode<Node3D>("Visuals");
 		_scaffolding = GetNode<Node3D>("Scaffolding");
-		_statusLabel = GetNodeOrNull<Label3D>("Visuals/StatusLabel");
 
 		UpdateVisuals();
-		
+
 		// Register with simulation as a pending construction site
 		_sim.RegisterConstructionSite(this);
 	}
@@ -49,20 +46,19 @@ public partial class ResidencePlot : Node3D
 	private void FinishConstruction()
 	{
 		UpdateVisuals();
-		UpdateStatusLabel();
 		_spawnTimer.WaitTime = GD.RandRange(5.0, 15.0);
 		_spawnTimer.Start();
-		_sim.AddPopulation(5);
+		
 		ResidentCount = 5;
-		GD.Print("House construction finished!");
-	}
-
-	private void UpdateStatusLabel()
-	{
-		if (_statusLabel != null)
+		_sim.AddPopulation(ResidentCount);
+		
+		// 75% Representative: Spawn 4 visual agents for 5 residents
+		for (int i = 0; i < 4; i++)
 		{
-			_statusLabel.Text = $"Pops: {ResidentCount}";
+			CallDeferred(nameof(SpawnVisualPop));
 		}
+		
+		GD.Print($"House construction finished! Population: {ResidentCount}");
 	}
 
 	private void UpdateVisuals()
@@ -73,12 +69,8 @@ public partial class ResidencePlot : Node3D
 
 	private void OnSpawnTimerTimeout()
 	{
-		int maxVisualPops = Mathf.FloorToInt(ResidentCount * 0.75f);
-		if (_activePops.Count < maxVisualPops)
-		{
-			SpawnVisualPop();
-		}
-		_spawnTimer.WaitTime = GD.RandRange(10.0, 30.0);
+		SpawnVisualPop();
+		_spawnTimer.WaitTime = GD.RandRange(15.0, 45.0);
 	}
 
 	private void SpawnVisualPop()
@@ -104,16 +96,7 @@ public partial class ResidencePlot : Node3D
 				fullTrip.Add(toHome[i]);
 			}
 
-			_activePops.Add(pop);
-			pop.TreeExiting += () => _activePops.Remove(pop);
 			pop.WalkPath(fullTrip.ToArray());
-		}
-		else
-		{
-			// If no road/market, just let them walk around then disappear
-			_activePops.Add(pop);
-			pop.TreeExiting += () => _activePops.Remove(pop);
-			pop.WalkPath(new Vector3[] { GlobalPosition, GlobalPosition + new Vector3(2, 0, 2) });
 		}
 	}
 }

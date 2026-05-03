@@ -19,13 +19,10 @@ public partial class AmbienceManager : Node
 
 	public override void _Process(double delta)
 	{
-		// Disabled: Villagers are now only representations of buildings (houses)
+		// Disabled: Villagers without houses are removed from the concept.
 		/*
 		_timeSinceLastSpawn += delta;
-
-		// Calculate spawn rate based on population (higher pop = faster spawns)
 		float adjustedSpawnRate = BaseSpawnRate / Mathf.Max(1.0f, _sim.Population / 5.0f);
-
 		if (_timeSinceLastSpawn >= adjustedSpawnRate)
 		{
 			SpawnAmbiencePop();

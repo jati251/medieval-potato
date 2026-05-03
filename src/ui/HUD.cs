@@ -143,7 +143,8 @@ public partial class HUD : CanvasLayer
 			{"BuildTownCenter", "TownCenter"},
 			{"BuildMeatShop", "MeatShop"},
 			{"BuildStable", "HorseStable"},
-			{"BuildGuild", "Guild"}
+			{"BuildGuild", "Guild"},
+			{"BuildForager", "ForagerHut"}
 		};
 
 		foreach (var pair in btns)
@@ -231,7 +232,8 @@ public partial class HUD : CanvasLayer
 			{"BuildTownCenter", "Town Center"},
 			{"BuildMeatShop", "Meat Shop"},
 			{"BuildStable", "Stable"},
-			{"BuildGuild", "Builder Guild"}
+			{"BuildGuild", "Builder Guild"},
+			{"BuildForager", "Forager Hut"}
 		};
 
 		foreach (var pair in btnNames)
@@ -245,7 +247,8 @@ public partial class HUD : CanvasLayer
 		
 		if (_isHouseMode)
 		{
-			string btnPath = "BottomBar/MarginContainer/HBoxContainer/Build" + _currentBuildingType;
+			string btnKey = _currentBuildingType == "ForagerHut" ? "Forager" : _currentBuildingType;
+			string btnPath = "BottomBar/MarginContainer/HBoxContainer/Build" + btnKey;
 			var btn = GetNodeOrNull<Button>(btnPath);
 			if (btn != null) btn.Text = "CANCEL";
 		}
@@ -263,7 +266,7 @@ public partial class HUD : CanvasLayer
 
 	private void UpdateDisplay()
 	{
-		if (_popLabel != null) _popLabel.Text = $"Population: {_sim.Population}";
+		if (_popLabel != null) _popLabel.Text = $"Population: {_sim.Population} ({_sim.UnemployedPopulation} Unemployed)";
 		if (_foodLabel != null) _foodLabel.Text = $"Food: {_sim.Food:F1}";
 		if (_woodLabel != null) _woodLabel.Text = $"Wood: {_sim.Wood}";
 	}

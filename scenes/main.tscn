@@ -20,6 +20,10 @@
 [ext_resource type="PackedScene" path="res://src/buildings/BuilderGuild.tscn" id="15_guild"]
 [ext_resource type="PackedScene" path="res://src/environment/River.tscn" id="16_river"]
 [ext_resource type="PackedScene" path="res://src/environment/Hill.tscn" id="17_hill"]
+[ext_resource type="PackedScene" path="res://src/buildings/ForagerHut.tscn" id="18_forager_hut"]
+[ext_resource type="PackedScene" path="res://src/buildings/BerryBush.tscn" id="19_berry_bush"]
+[ext_resource type="PackedScene" path="res://src/agents/Deer.tscn" id="20_deer"]
+[ext_resource type="PackedScene" path="res://src/agents/Boar.tscn" id="21_boar"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.2, 0.5, 0.2, 1)
@@ -76,6 +80,7 @@ TownCenterScene = ExtResource("12_town")
 MeatShopScene = ExtResource("13_meat")
 HorseStableScene = ExtResource("14_stable")
 BuilderGuildScene = ExtResource("15_guild")
+ForagerHutScene = ExtResource("18_forager_hut")
 GroundPath = NodePath("../Ground")
 
 [node name="AmbienceManager" type="Node" parent="."]
@@ -138,3 +143,24 @@ transform = Transform3D(1.5, 0, 0, 0, 1, 0, 0, 0, 1.5, 120, 2, 80)
 
 [node name="Hill3" parent="." instance=ExtResource("17_hill")]
 transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, -120, 4, 120)
+
+[node name="BerryBush1" parent="." instance=ExtResource("19_berry_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 15)
+
+[node name="BerryBush2" parent="." instance=ExtResource("19_berry_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 12)
+
+[node name="BerryBush3" parent="." instance=ExtResource("19_berry_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 18)
+
+[node name="Deer1" parent="." instance=ExtResource("20_deer")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, 15)
+
+[node name="Deer2" parent="." instance=ExtResource("20_deer")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, 18)
+
+[node name="Boar1" parent="." instance=ExtResource("21_boar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, -20)
+
+[node name="Boar2" parent="." instance=ExtResource("21_boar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, -25)

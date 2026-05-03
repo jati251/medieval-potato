@@ -8,6 +8,7 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene MeatShopScene { get; set; }
 	[Export] public PackedScene HorseStableScene { get; set; }
 	[Export] public PackedScene BuilderGuildScene { get; set; }
+	[Export] public PackedScene ForagerHutScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
@@ -50,6 +51,7 @@ public partial class BuildingManager : Node3D
 			case "MeatShop": _currentScene = MeatShopScene; break;
 			case "HorseStable": _currentScene = HorseStableScene; break;
 			case "Guild": _currentScene = BuilderGuildScene; break;
+			case "ForagerHut": _currentScene = ForagerHutScene; break;
 		}
 		
 		// Reset preview
@@ -143,16 +145,22 @@ public partial class BuildingManager : Node3D
 			Node parent = collider.GetParent();
 			
 			// We check both the parent and the parent's parent just in case
-			if (parent is ResidencePlot house || parent.GetParent() is ResidencePlot house2)
+			if (parent is ResidencePlot || (parent != null && parent.GetParent() is ResidencePlot))
 			{
 				var actualHouse = parent is ResidencePlot ? (ResidencePlot)parent : (ResidencePlot)parent.GetParent();
 				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-				if (hud != null) hud.ShowBuildingInfo(actualHouse, "Peasant House", $"Residents: {actualHouse.ResidentCount} / 5\nStatus: Cozy");
+				string status = actualHouse.IsConstructed ? $"Residents: {actualHouse.ResidentCount} / 5\nStatus: Cozy" : "Status: Under Construction";
+				if (hud != null) hud.ShowBuildingInfo(actualHouse, "Peasant House", status);
 			}
 			else if (parent is BuilderGuild guild)
 			{
 				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
 				if (hud != null) hud.ShowBuildingInfo(guild, "Builder's Guild", "Active Builders: 2\nStatus: Employed");
+			}
+			else if (parent is ForagerHut hut)
+			{
+				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+				if (hud != null) hud.ShowBuildingInfo(hut, "Forager Hut", "Gathering Berries\nWorkers: 2\nStatus: Active");
 			}
 			else
 			{
@@ -291,6 +299,7 @@ public partial class BuildingManager : Node3D
 			case "MeatShop": scene = MeatShopScene; break;
 			case "HorseStable": scene = HorseStableScene; break;
 			case "Guild": scene = BuilderGuildScene; break;
+			case "ForagerHut": scene = ForagerHutScene; break;
 		}
 
 		if (scene == null) return;
