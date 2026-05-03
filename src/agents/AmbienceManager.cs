@@ -19,6 +19,8 @@ public partial class AmbienceManager : Node
 
 	public override void _Process(double delta)
 	{
+		// Disabled: Villagers are now only representations of buildings (houses)
+		/*
 		_timeSinceLastSpawn += delta;
 
 		// Calculate spawn rate based on population (higher pop = faster spawns)
@@ -29,6 +31,7 @@ public partial class AmbienceManager : Node
 			SpawnAmbiencePop();
 			_timeSinceLastSpawn = 0.0;
 		}
+		*/
 	}
 
 	private void SpawnAmbiencePop()
