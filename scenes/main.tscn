@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/entities/ResidencePlot.tscn" id="2_house"]
@@ -18,6 +18,8 @@
 [ext_resource type="PackedScene" path="res://scenes/entities/MeatShop.tscn" id="13_meat"]
 [ext_resource type="PackedScene" path="res://scenes/entities/HorseStable.tscn" id="14_stable"]
 [ext_resource type="PackedScene" path="res://scenes/entities/BuilderGuild.tscn" id="15_guild"]
+[ext_resource type="PackedScene" path="res://scenes/River.tscn" id="16_river"]
+[ext_resource type="PackedScene" path="res://scenes/Hill.tscn" id="17_hill"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.2, 0.5, 0.2, 1)
@@ -50,7 +52,9 @@ _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, -15, 0, 5, 0, 0, 0, 0, 0, 0, 15, 0, 5),
 "tilts": PackedFloat32Array(0, 0)
 }
-point_count = 2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(500, 1, 500)
 
 [node name="root" type="Node3D"]
 script = ExtResource("1_main")
@@ -82,8 +86,16 @@ RoadPath = NodePath("../Road")
 [node name="Road" type="Path3D" parent="."]
 curve = SubResource("Curve3D_1")
 
-[node name="Ground" type="MeshInstance3D" parent="."]
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 1
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
 mesh = SubResource("PlaneMesh_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="River" parent="." instance=ExtResource("16_river")]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 10, 0)
@@ -116,3 +128,12 @@ transform = Transform3D(1.5, 0, 0, 0, 1.2, 0, 0, 0, 1.5, 8, 0, 8)
 
 [node name="Rock2" parent="." instance=ExtResource("8_rock")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 12)
+
+[node name="Hill1" parent="." instance=ExtResource("17_hill")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 2, -100)
+
+[node name="Hill2" parent="." instance=ExtResource("17_hill")]
+transform = Transform3D(1.5, 0, 0, 0, 1, 0, 0, 0, 1.5, 120, 2, 80)
+
+[node name="Hill3" parent="." instance=ExtResource("17_hill")]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, -120, 4, 120)

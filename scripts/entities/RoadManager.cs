@@ -10,7 +10,7 @@ public partial class RoadManager : Node3D
 	private bool _isBuilding = false;
 	private Vector3? _lastPoint = null;
 	private long _lastPointId = -1;
-	private MeshInstance3D _ground;
+	private Node3D _ground;
 	private Camera3D _camera;
 	private Node3D _previewContainer;
 	
@@ -19,7 +19,7 @@ public partial class RoadManager : Node3D
 
 	public override void _Ready()
 	{
-		_ground = GetNode<MeshInstance3D>(GroundPath);
+		_ground = GetNode<Node3D>(GroundPath);
 		_camera = GetViewport().GetCamera3D();
 		
 		_previewContainer = new Node3D();
@@ -79,14 +79,19 @@ public partial class RoadManager : Node3D
 			
 			var segment = RoadSegmentScene.Instantiate<MeshInstance3D>();
 			_previewContainer.AddChild(segment);
-			segment.GlobalPosition = new Vector3(pos.X, 0.05f, pos.Z);
+			segment.GlobalPosition = pos + Vector3.Up * 0.05f;
 			
 			if (distance > 0.1f)
 			{
-				// Look ahead in the direction of the road, not just at the end point
-				// This prevents the last segment from looking at its own position
-				segment.LookAt(segment.GlobalPosition + (end - start), Vector3.Up);
-				segment.RotateY(Mathf.Pi / 2);
+				Vector3 direction = (end - start);
+				direction.Y = 0;
+				
+				if (direction.Length() > 0.01f)
+				{
+					Vector3 lookTarget = segment.GlobalPosition + direction.Normalized();
+					segment.LookAt(lookTarget, Vector3.Up);
+					segment.RotateY(Mathf.Pi / 2);
+				}
 			}
 		}
 	}
@@ -102,6 +107,13 @@ public partial class RoadManager : Node3D
 			{
 				Vector3 pos = currentPoint.Value;
 				pos.Y = 0; // Keep on ground
+
+				// Water Check: Don't allow roads in the river!
+				if (IsPositionOnWater(pos))
+				{
+					GD.Print("Cannot build roads on water!");
+					return;
+				}
 				
 				long currentId = _pointCounter++;
 				_astar.AddPoint(currentId, pos);
@@ -144,14 +156,17 @@ public partial class RoadManager : Node3D
 		_camera = GetViewport().GetCamera3D();
 		Vector2 mousePos = GetViewport().GetMousePosition();
 		
-		Vector3 rayOrigin = _camera.ProjectRayOrigin(mousePos);
-		Vector3 rayDirection = _camera.ProjectRayNormal(mousePos);
+		Vector3 from = _camera.ProjectRayOrigin(mousePos);
+		Vector3 to = from + _camera.ProjectRayNormal(mousePos) * 1000.0f;
 		
-		// Simple Plane-Ray intersection (y=0 plane)
-		float t = -rayOrigin.Y / rayDirection.Y;
-		if (t > 0)
+		var spaceState = GetWorld3D().DirectSpaceState;
+		// Layer 1 is Ground, Layer 2 is Water. We want to hit the ground.
+		var query = PhysicsRayQueryParameters3D.Create(from, to, 1);
+		var result = spaceState.IntersectRay(query);
+		
+		if (result.Count > 0)
 		{
-			return rayOrigin + rayDirection * t;
+			return (Vector3)result["position"];
 		}
 		
 		return null;
@@ -169,14 +184,34 @@ public partial class RoadManager : Node3D
 			
 			var segment = RoadSegmentScene.Instantiate<MeshInstance3D>();
 			AddChild(segment);
-			segment.GlobalPosition = new Vector3(pos.X, 0.02f, pos.Z);
+			
+			// Slightly above terrain to avoid Z-fighting
+			segment.GlobalPosition = pos + Vector3.Up * 0.05f;
 			
 			if (distance > 0.1f)
 			{
-				// Look ahead in the direction of the road
-				segment.LookAt(segment.GlobalPosition + (end - start), Vector3.Up);
-				segment.RotateY(Mathf.Pi / 2); 
+				Vector3 direction = (end - start);
+				direction.Y = 0; // Lock to horizontal plane
+				
+				if (direction.Length() > 0.01f)
+				{
+					Vector3 lookTarget = segment.GlobalPosition + direction.Normalized();
+					segment.LookAt(lookTarget, Vector3.Up);
+					segment.RotateY(Mathf.Pi / 2); 
+				}
 			}
 		}
+	}
+
+	private bool IsPositionOnWater(Vector3 position)
+	{
+		var spaceState = GetWorld3D().DirectSpaceState;
+		Vector3 from = position + Vector3.Up * 10.0f;
+		Vector3 to = position + Vector3.Down * 20.0f;
+		
+		var query = PhysicsRayQueryParameters3D.Create(from, to, 2); 
+		var result = spaceState.IntersectRay(query);
+		
+		return result.Count > 0;
 	}
 }

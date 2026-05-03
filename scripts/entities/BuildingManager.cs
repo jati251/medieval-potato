@@ -13,12 +13,12 @@ public partial class BuildingManager : Node3D
 	private bool _isBuilding = false;
 	private PackedScene _currentScene;
 	private Camera3D _camera;
-	private MeshInstance3D _ground;
+	private Node3D _ground;
 	private Node3D _previewHouse;
 
 	public override void _Ready()
 	{
-		_ground = GetNode<MeshInstance3D>(GroundPath);
+		_ground = GetNode<Node3D>(GroundPath);
 		_camera = GetViewport().GetCamera3D();
 		_currentScene = HouseScene;
 	}
@@ -49,6 +49,8 @@ public partial class BuildingManager : Node3D
 			{
 				_previewHouse = _currentScene.Instantiate<Node3D>();
 				AddChild(_previewHouse);
+				// CRITICAL: Disable all collisions on preview to prevent flicker!
+				DisableCollisionRecursively(_previewHouse);
 			}
 			_previewHouse.Visible = true;
 		}
@@ -58,14 +60,29 @@ public partial class BuildingManager : Node3D
 		}
 	}
 
+	private void DisableCollisionRecursively(Node node)
+	{
+		if (node is CollisionObject3D co)
+		{
+			co.CollisionLayer = 0;
+			co.CollisionMask = 0;
+		}
+		foreach (Node child in node.GetChildren())
+		{
+			DisableCollisionRecursively(child);
+		}
+	}
+
 	public override void _Process(double delta)
 	{
 		if (_isBuilding && _previewHouse != null)
 		{
-			Vector3? mousePos = GetMouseWorldPosition();
-			if (mousePos.HasValue)
+			var res = GetMouseWorldPosition();
+			if (res.Hit)
 			{
-				_previewHouse.GlobalPosition = mousePos.Value;
+				_previewHouse.GlobalPosition = res.Position;
+				// Visual feedback: red if steep, white/normal if flat
+				_previewHouse.Visible = res.Normal.Dot(Vector3.Up) > 0.9f;
 			}
 		}
 	}
@@ -76,10 +93,10 @@ public partial class BuildingManager : Node3D
 		{
 			if (_isBuilding)
 			{
-				Vector3? spawnPos = GetMouseWorldPosition();
-				if (spawnPos.HasValue)
+				var res = GetMouseWorldPosition();
+				if (res.Hit)
 				{
-					PlaceBuilding(spawnPos.Value);
+					PlaceBuilding(res.Position, res.Normal);
 				}
 			}
 			else
@@ -126,14 +143,94 @@ public partial class BuildingManager : Node3D
 		}
 	}
 
-	private void PlaceBuilding(Vector3 position)
+	private struct RayResult
+	{
+		public Vector3 Position;
+		public Vector3 Normal;
+		public bool Hit;
+	}
+
+	private RayResult GetMouseWorldPosition()
+	{
+		var camera = GetViewport().GetCamera3D();
+		Vector2 mousePos = GetViewport().GetMousePosition();
+		
+		Vector3 from = camera.ProjectRayOrigin(mousePos);
+		Vector3 to = from + camera.ProjectRayNormal(mousePos) * 1000.0f;
+		
+		var spaceState = GetWorld3D().DirectSpaceState;
+		// Layer 1 is Ground/Hills
+		var query = PhysicsRayQueryParameters3D.Create(from, to, 1);
+		var result = spaceState.IntersectRay(query);
+		
+		if (result.Count > 0)
+		{
+			return new RayResult { 
+				Position = (Vector3)result["position"], 
+				Normal = (Vector3)result["normal"],
+				Hit = true 
+			};
+		}
+		
+		return new RayResult { Hit = false };
+	}
+
+	private void PlaceBuilding(Vector3 position, Vector3 normal)
 	{
 		if (_currentScene == null) return;
 
+		// Surface Check: Only build on FLAT surfaces (not walls!)
+		if (normal.Dot(Vector3.Up) < 0.9f)
+		{
+			GD.Print("Surface too steep for building!");
+			return;
+		}
+
+		// Map Border Check
+		if (Mathf.Abs(position.X) > 248 || Mathf.Abs(position.Z) > 248) return;
+
+		// Deep Water Check
+		if (IsPositionOnWater(position))
+		{
+			GD.Print("Cannot build on water!");
+			return;
+		}
+
 		var building = _currentScene.Instantiate<Node3D>();
 		GetTree().CurrentScene.AddChild(building);
+		
+		// Move to Layer 4 so future placements don't hit this building
+		SetCollisionLayerRecursively(building, 4);
+		
 		building.GlobalPosition = position;
 		building.RotateY((float)GD.RandRange(0, Mathf.Pi * 2));
+	}
+
+	private void SetCollisionLayerRecursively(Node node, uint layer)
+	{
+		if (node is CollisionObject3D co)
+		{
+			co.CollisionLayer = layer;
+			// Buildings should still be clickable but not block terrain raycast
+		}
+		foreach (Node child in node.GetChildren())
+		{
+			SetCollisionLayerRecursively(child, layer);
+		}
+	}
+
+	private bool IsPositionOnWater(Vector3 position)
+	{
+		var spaceState = GetWorld3D().DirectSpaceState;
+		// Raycast from high above to deep below to catch water anywhere
+		Vector3 from = position + Vector3.Up * 10.0f;
+		Vector3 to = position + Vector3.Down * 20.0f;
+		
+		// Layer 2 is our River
+		var query = PhysicsRayQueryParameters3D.Create(from, to, 2); 
+		var result = spaceState.IntersectRay(query);
+		
+		return result.Count > 0;
 	}
 
 	public void ForcePlaceBuilding(string type, Vector3 position, float rotation)
@@ -154,22 +251,5 @@ public partial class BuildingManager : Node3D
 		GetTree().CurrentScene.AddChild(building);
 		building.GlobalPosition = position;
 		building.GlobalRotation = new Vector3(0, rotation, 0);
-	}
-
-	private Vector3? GetMouseWorldPosition()
-	{
-		_camera = GetViewport().GetCamera3D();
-		Vector2 mousePos = GetViewport().GetMousePosition();
-		
-		Vector3 rayOrigin = _camera.ProjectRayOrigin(mousePos);
-		Vector3 rayDirection = _camera.ProjectRayNormal(mousePos);
-		
-		float t = -rayOrigin.Y / rayDirection.Y;
-		if (t > 0)
-		{
-			return rayOrigin + rayDirection * t;
-		}
-		
-		return null;
 	}
 }
