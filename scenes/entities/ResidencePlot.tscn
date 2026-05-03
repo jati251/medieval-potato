@@ -3,7 +3,11 @@
 [ext_resource type="Script" path="res://scripts/entities/ResidencePlot.cs" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/entities/VisualPop.tscn" id="2_pop"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.4, 0.25, 0.15, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
+material = SubResource("StandardMaterial3D_1")
 size = Vector3(2, 2, 2)
 
 [node name="root" type="Node3D"]

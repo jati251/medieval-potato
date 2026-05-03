@@ -9,9 +9,30 @@
 
 [ext_resource type="Script" path="res://scripts/AmbienceManager.cs" id="5_amb"]
 [ext_resource type="PackedScene" path="res://scenes/entities/VisualPop.tscn" id="6_pop"]
+[ext_resource type="PackedScene" path="res://scenes/entities/Tree.tscn" id="7_tree"]
+[ext_resource type="PackedScene" path="res://scenes/entities/Rock.tscn" id="8_rock"]
+[ext_resource type="Script" path="res://scripts/entities/RoadManager.cs" id="9_road_mgr"]
+[ext_resource type="PackedScene" path="res://scenes/entities/RoadSegment.tscn" id="10_road_seg"]
+[ext_resource type="Script" path="res://scripts/entities/BuildingManager.cs" id="11_build_mgr"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.2, 0.5, 0.2, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1"]
-size = Vector2(50, 50)
+material = SubResource("StandardMaterial3D_1")
+size = Vector2(100, 100)
+
+[sub_resource type="Sky" id="Sky_1"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+tonemap_mode = 2
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.2, 0.4, 0.2, 1)
+fog_density = 0.02
+fog_aerial_perspective = 1.0
 
 [sub_resource type="Curve3D" id="Curve3D_1"]
 _data = {
@@ -23,7 +44,20 @@ point_count = 2
 [node name="root" type="Node3D"]
 script = ExtResource("1_main")
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
+
+[node name="RoadManager" type="Node3D" parent="."]
+script = ExtResource("9_road_mgr")
+RoadSegmentScene = ExtResource("10_road_seg")
+GroundPath = NodePath("../Ground")
+
+[node name="BuildingManager" type="Node3D" parent="."]
+script = ExtResource("11_build_mgr")
+HouseScene = ExtResource("2_house")
+GroundPath = NodePath("../Ground")
 
 [node name="AmbienceManager" type="Node" parent="."]
 script = ExtResource("5_amb")
@@ -52,3 +86,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -5)
 
 [node name="MarketMarker" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
+
+[node name="Tree1" parent="." instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -10)
+
+[node name="Tree2" parent="." instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -8)
+
+[node name="Tree3" parent="." instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, 5)
+
+[node name="Rock1" parent="." instance=ExtResource("8_rock")]
+transform = Transform3D(1.5, 0, 0, 0, 1.2, 0, 0, 0, 1.5, 8, 0, 8)
+
+[node name="Rock2" parent="." instance=ExtResource("8_rock")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 12)

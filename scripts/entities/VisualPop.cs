@@ -10,25 +10,30 @@ public partial class VisualPop : Node3D
 		// We'll use this method to trigger the walk once properties are set
 	}
 
-	public void WalkToAndBack(Vector3 targetPosition)
+	public void WalkPath(Vector3[] path)
 	{
-		Vector3 startPos = GlobalPosition;
-		double duration = startPos.DistanceTo(targetPosition) / WalkSpeed;
+		if (path == null || path.Length < 2) return;
 
 		Tween tween = CreateTween();
 		
-		// 1. Walk to target
-		tween.TweenProperty(this, "global_position", targetPosition, duration)
-			 .SetTrans(Tween.TransitionType.Linear);
-		
-		// 2. Wait 2 seconds (Market shopping)
-		tween.TweenInterval(2.0f);
-		
-		// 3. Walk back to start
-		tween.TweenProperty(this, "global_position", startPos, duration)
-			 .SetTrans(Tween.TransitionType.Linear);
-		
-		// 4. Delete self
+		// Move through each point in the path
+		for (int i = 1; i < path.Length; i++)
+		{
+			Vector3 start = path[i - 1];
+			Vector3 end = path[i];
+			double duration = start.DistanceTo(end) / WalkSpeed;
+
+			tween.TweenProperty(this, "global_position", end, duration)
+				 .SetTrans(Tween.TransitionType.Linear);
+			
+			// If it's the middle of the path (the target point), wait 2 seconds
+			if (i == path.Length / 2)
+			{
+				tween.TweenInterval(2.0f);
+			}
+		}
+
+		// Delete self when finished
 		tween.TweenCallback(Callable.From(QueueFree));
 	}
 }

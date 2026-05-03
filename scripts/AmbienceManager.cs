@@ -35,22 +35,25 @@ public partial class AmbienceManager : Node
 	{
 		if (PopScene == null || _road == null) return;
 
+		var roadMgr = GetTree().Root.GetNode<RoadManager>("root/RoadManager");
+		if (roadMgr == null) return;
+
 		// 1. Create the pop
 		var pop = PopScene.Instantiate<VisualPop>();
 		GetTree().Root.AddChild(pop);
 		
 		// 2. Set start and end points from the Path3D
-		// For simplicity, we'll just use the first and last points of the curve
 		Curve3D curve = _road.Curve;
 		Vector3 startPos = _road.ToGlobal(curve.GetPointPosition(0));
 		Vector3 endPos = _road.ToGlobal(curve.GetPointPosition(curve.PointCount - 1));
 
 		pop.GlobalPosition = startPos;
 		
-		// 3. Randomize speed a bit for variety
-		pop.WalkSpeed = (float)GD.RandRange(1.5, 3.0);
+		// 3. Request a path through the road network
+		Vector3[] path = roadMgr.GetRoadPath(startPos, endPos);
 		
-		// 4. Send them walking
-		pop.WalkToAndBack(endPos);
+		// 4. Randomize speed and walk
+		pop.WalkSpeed = (float)GD.RandRange(1.5, 3.0);
+		pop.WalkPath(path);
 	}
 }
