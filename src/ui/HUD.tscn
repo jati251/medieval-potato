@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/HUD.cs" id="1_hud"]
-[ext_resource type="PackedScene" path="res://scenes/BuildingInfoPopup.tscn" id="2_popup"]
-[ext_resource type="PackedScene" path="res://scenes/PauseMenu.tscn" id="3_pause"]
-[ext_resource type="PackedScene" path="res://scenes/SaveLoadDialog.tscn" id="4_saveload"]
+[ext_resource type="Script" path="res://src/ui/HUD.cs" id="1_hud"]
+[ext_resource type="PackedScene" path="res://src/ui/BuildingInfoPopup.tscn" id="2_popup"]
+[ext_resource type="PackedScene" path="res://src/ui/PauseMenu.tscn" id="3_pause"]
+[ext_resource type="PackedScene" path="res://src/ui/SaveLoadDialog.tscn" id="4_saveload"]
 
 [node name="root" type="CanvasLayer"]
 script = ExtResource("1_hud")

@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/entities/ResidencePlot.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://scenes/entities/VisualPop.tscn" id="2_pop"]
+[ext_resource type="Script" path="res://src/buildings/ResidencePlot.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/VisualPop.tscn" id="2_pop"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.4, 0.25, 0.15, 1)

@@ -35,6 +35,13 @@ public partial class RTSCamera : Camera3D
 			}
 		}
 
+		if (@event is InputEventMagnifyGesture magnifyGesture)
+		{
+			// Adjust zoom based on magnify factor
+			// factor > 1.0 is pinch-out (zoom in), factor < 1.0 is pinch-in (zoom out)
+			_targetZoom = Mathf.Clamp(_targetZoom / magnifyGesture.Factor, 5.0f, 40.0f);
+		}
+
 		if (@event is InputEventMouseMotion mouseMotion && _isRotating)
 		{
 			RotationDegrees = new Vector3(RotationDegrees.X, RotationDegrees.Y - mouseMotion.Relative.X * 0.5f, RotationDegrees.Z);

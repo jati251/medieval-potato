@@ -68,7 +68,7 @@ public partial class HUD : CanvasLayer
 			_pauseMenu.GetNode<Button>("VBoxContainer/Resume").Pressed += TogglePause;
 			_pauseMenu.GetNode<Button>("VBoxContainer/MainMenu").Pressed += () => {
 				GetTree().Paused = false;
-				GetTree().ChangeSceneToFile("res://scenes/MainMenu.tscn");
+				GetTree().ChangeSceneToFile("res://src/ui/MainMenu.tscn");
 			};
 			_pauseMenu.GetNode<Button>("VBoxContainer/Quit").Pressed += () => GetTree().Quit();
 			_pauseMenu.GetNode<Button>("VBoxContainer/Save").Pressed += () => {

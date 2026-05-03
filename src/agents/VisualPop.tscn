@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/entities/VisualPop.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://scenes/entities/Potato3D.tscn" id="2_potato"]
+[ext_resource type="Script" path="res://src/agents/VisualPop.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/Potato3D.tscn" id="2_potato"]
 
 [node name="root" type="Node3D"]
 script = ExtResource("1_script")

@@ -11,12 +11,12 @@ config_version=5
 [application]
 
 config/name="MedievalPotato"
-run/main_scene="res://scenes/MainMenu.tscn"
+run/main_scene="res://src/ui/MainMenu.tscn"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 
 [autoload]
 
-GlobalSimulation="*res://scripts/GlobalSimulation.cs"
+GlobalSimulation="*res://src/core/GlobalSimulation.cs"
 
 [dotnet]
 
