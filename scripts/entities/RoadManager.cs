@@ -81,9 +81,11 @@ public partial class RoadManager : Node3D
 			_previewContainer.AddChild(segment);
 			segment.GlobalPosition = new Vector3(pos.X, 0.05f, pos.Z);
 			
-			if (start != end)
+			if (distance > 0.1f)
 			{
-				segment.LookAt(end, Vector3.Up);
+				// Look ahead in the direction of the road, not just at the end point
+				// This prevents the last segment from looking at its own position
+				segment.LookAt(segment.GlobalPosition + (end - start), Vector3.Up);
 				segment.RotateY(Mathf.Pi / 2);
 			}
 		}
@@ -169,12 +171,11 @@ public partial class RoadManager : Node3D
 			AddChild(segment);
 			segment.GlobalPosition = new Vector3(pos.X, 0.02f, pos.Z);
 			
-			// Rotate to align with road direction
-			Vector3 lookAtPos = end;
-			if (start != end)
+			if (distance > 0.1f)
 			{
-				segment.LookAt(lookAtPos, Vector3.Up);
-				segment.RotateY(Mathf.Pi / 2); // Planes are oriented differently
+				// Look ahead in the direction of the road
+				segment.LookAt(segment.GlobalPosition + (end - start), Vector3.Up);
+				segment.RotateY(Mathf.Pi / 2); 
 			}
 		}
 	}

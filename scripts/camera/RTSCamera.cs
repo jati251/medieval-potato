@@ -9,11 +9,15 @@ public partial class RTSCamera : Camera3D
 	
 	private Vector3 _groundPosition;
 	private float _targetZoom = 15.0f;
+	private ulong _lastTicks;
 
 	public override void _Ready()
 	{
 		_groundPosition = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
+		_lastTicks = Time.GetTicksMsec();
 	}
+
+	private bool _isRotating = false;
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
@@ -23,15 +27,33 @@ public partial class RTSCamera : Camera3D
 				_targetZoom = Mathf.Clamp(_targetZoom - ZoomSpeed, 5.0f, 40.0f);
 			if (mouseButton.ButtonIndex == MouseButton.WheelDown)
 				_targetZoom = Mathf.Clamp(_targetZoom + ZoomSpeed, 5.0f, 40.0f);
+			
+			if (mouseButton.ButtonIndex == MouseButton.Middle)
+			{
+				_isRotating = mouseButton.Pressed;
+				Input.MouseMode = _isRotating ? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
+			}
+		}
+
+		if (@event is InputEventMouseMotion mouseMotion && _isRotating)
+		{
+			RotationDegrees = new Vector3(RotationDegrees.X, RotationDegrees.Y - mouseMotion.Relative.X * 0.5f, RotationDegrees.Z);
 		}
 	}
 
 	public override void _Process(double delta)
 	{
-		float fDelta = (float)delta;
-		HandleMovement(fDelta);
-		HandleRotation(fDelta);
-		ApplyCameraTransform(fDelta);
+		// Calculate REAL-TIME delta (unaffected by Engine.TimeScale)
+		ulong currentTicks = Time.GetTicksMsec();
+		float realDelta = (currentTicks - _lastTicks) / 1000.0f;
+		_lastTicks = currentTicks;
+
+		// If the game just started or lagged, clamp delta to avoid huge jumps
+		realDelta = Mathf.Min(realDelta, 0.1f);
+
+		HandleMovement(realDelta);
+		HandleRotation(realDelta);
+		ApplyCameraTransform(realDelta);
 	}
 
 	private void HandleMovement(float delta)

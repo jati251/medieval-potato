@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://scenes/entities/TownCenter.tscn" id="12_town"]
 [ext_resource type="PackedScene" path="res://scenes/entities/MeatShop.tscn" id="13_meat"]
 [ext_resource type="PackedScene" path="res://scenes/entities/HorseStable.tscn" id="14_stable"]
+[ext_resource type="PackedScene" path="res://scenes/entities/BuilderGuild.tscn" id="15_guild"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.2, 0.5, 0.2, 1)
@@ -70,6 +71,7 @@ HouseScene = ExtResource("2_house")
 TownCenterScene = ExtResource("12_town")
 MeatShopScene = ExtResource("13_meat")
 HorseStableScene = ExtResource("14_stable")
+BuilderGuildScene = ExtResource("15_guild")
 GroundPath = NodePath("../Ground")
 
 [node name="AmbienceManager" type="Node" parent="."]

@@ -7,6 +7,7 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene TownCenterScene { get; set; }
 	[Export] public PackedScene MeatShopScene { get; set; }
 	[Export] public PackedScene HorseStableScene { get; set; }
+	[Export] public PackedScene BuilderGuildScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
@@ -30,6 +31,7 @@ public partial class BuildingManager : Node3D
 			case "TownCenter": _currentScene = TownCenterScene; break;
 			case "MeatShop": _currentScene = MeatShopScene; break;
 			case "HorseStable": _currentScene = HorseStableScene; break;
+			case "Guild": _currentScene = BuilderGuildScene; break;
 		}
 		
 		// Reset preview
@@ -106,13 +108,20 @@ public partial class BuildingManager : Node3D
 			if (parent is ResidencePlot house || parent.GetParent() is ResidencePlot house2)
 			{
 				var actualHouse = parent is ResidencePlot ? (ResidencePlot)parent : (ResidencePlot)parent.GetParent();
-				GetTree().Root.GetNode<HUD>("root/HUD").ShowBuildingInfo(actualHouse, "Peasant House", $"Residents: {actualHouse.ResidentCount} / 5\nStatus: Cozy");
+				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+				if (hud != null) hud.ShowBuildingInfo(actualHouse, "Peasant House", $"Residents: {actualHouse.ResidentCount} / 5\nStatus: Cozy");
+			}
+			else if (parent is BuilderGuild guild)
+			{
+				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+				if (hud != null) hud.ShowBuildingInfo(guild, "Builder's Guild", "Active Builders: 2\nStatus: Employed");
 			}
 			else
 			{
 				// Generic building info
 				string bName = parent.Name.ToString();
-				GetTree().Root.GetNode<HUD>("root/HUD").ShowBuildingInfo((Node3D)parent, bName, "A fine addition to the village.\nStatus: Standing");
+				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+				if (hud != null) hud.ShowBuildingInfo((Node3D)parent, bName, "A fine addition to the village.\nStatus: Standing");
 			}
 		}
 	}
@@ -122,9 +131,29 @@ public partial class BuildingManager : Node3D
 		if (_currentScene == null) return;
 
 		var building = _currentScene.Instantiate<Node3D>();
-		GetTree().Root.GetNode("root").AddChild(building);
+		GetTree().CurrentScene.AddChild(building);
 		building.GlobalPosition = position;
 		building.RotateY((float)GD.RandRange(0, Mathf.Pi * 2));
+	}
+
+	public void ForcePlaceBuilding(string type, Vector3 position, float rotation)
+	{
+		PackedScene scene = null;
+		switch (type)
+		{
+			case "House": scene = HouseScene; break;
+			case "TownCenter": scene = TownCenterScene; break;
+			case "MeatShop": scene = MeatShopScene; break;
+			case "HorseStable": scene = HorseStableScene; break;
+			case "Guild": scene = BuilderGuildScene; break;
+		}
+
+		if (scene == null) return;
+
+		var building = scene.Instantiate<Node3D>();
+		GetTree().CurrentScene.AddChild(building);
+		building.GlobalPosition = position;
+		building.GlobalRotation = new Vector3(0, rotation, 0);
 	}
 
 	private Vector3? GetMouseWorldPosition()

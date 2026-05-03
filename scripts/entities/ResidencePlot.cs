@@ -5,58 +5,84 @@ using System.Collections.Generic;
 public partial class ResidencePlot : Node3D
 {
 	[Export] public PackedScene PopScene { get; set; }
-	[Export] public int ResidentCount { get; set; } = 5;
 	[Export] public Vector3 MarketPosition { get; set; } = new Vector3(10, 0, 10);
 	
+	public int ResidentCount { get; private set; } = 0;
+	public float ConstructionProgress { get; private set; } = 0.0f;
+	public bool IsConstructed => ConstructionProgress >= 100.0f;
+
 	private Timer _spawnTimer;
+	private GlobalSimulation _sim;
+	private Node3D _visuals;
+	private Node3D _scaffolding;
 
 	public override void _Ready()
 	{
-		// 1. Register our residents into the simulation
-		var simulation = GetNode<GlobalSimulation>("/root/GlobalSimulation");
-		simulation.Population += ResidentCount;
-		
-		// 2. Setup Spawn Timer
+		_sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
 		_spawnTimer = GetNode<Timer>("Timer");
-		_spawnTimer.WaitTime = GD.RandRange(5.0, 15.0);
 		_spawnTimer.Timeout += OnSpawnTimerTimeout;
-		_spawnTimer.Start();
+
+		_visuals = GetNode<Node3D>("Visuals");
+		_scaffolding = GetNode<Node3D>("Scaffolding");
+
+		UpdateVisuals();
 		
-		GD.Print($"Residence Plot ready with {ResidentCount} residents.");
+		// Register with simulation as a pending construction site
+		_sim.RegisterConstructionSite(this);
+	}
+
+	public void AddProgress(float amount)
+	{
+		if (IsConstructed) return;
+
+		ConstructionProgress += amount;
+		if (ConstructionProgress >= 100.0f)
+		{
+			ConstructionProgress = 100.0f;
+			FinishConstruction();
+		}
+	}
+
+	private void FinishConstruction()
+	{
+		UpdateVisuals();
+		_spawnTimer.WaitTime = GD.RandRange(5.0, 15.0);
+		_spawnTimer.Start();
+		_sim.AddPopulation(5);
+		ResidentCount = 5;
+		GD.Print("House construction finished!");
+	}
+
+	private void UpdateVisuals()
+	{
+		if (_visuals != null) _visuals.Visible = IsConstructed;
+		if (_scaffolding != null) _scaffolding.Visible = !IsConstructed;
 	}
 
 	private void OnSpawnTimerTimeout()
 	{
 		SpawnVisualPop();
-		
-		// Randomize next spawn time
-		_spawnTimer.WaitTime = GD.RandRange(10.0, 30.0);
+		_spawnTimer.WaitTime = GD.RandRange(15.0, 45.0);
 	}
 
 	private void SpawnVisualPop()
 	{
-		if (PopScene == null) return;
+		if (PopScene == null || !IsConstructed) return;
 
 		var pop = PopScene.Instantiate<VisualPop>();
-		GetTree().Root.AddChild(pop);
+		GetTree().Root.GetNode("root").AddChild(pop);
 		pop.GlobalPosition = GlobalPosition;
 
-		// Find Market and RoadManager
 		var root = GetTree().Root.GetNode("root");
 		var market = root.GetNode<Marker3D>("MarketMarker");
 		var roadMgr = root.GetNode<RoadManager>("RoadManager");
 
 		if (market != null && roadMgr != null)
 		{
-			// 1. Path to Market
 			Vector3[] toMarket = roadMgr.GetRoadPath(GlobalPosition, market.GlobalPosition);
-			
-			// 2. Path back home
 			Vector3[] toHome = roadMgr.GetRoadPath(market.GlobalPosition, GlobalPosition);
 			
-			// 3. Combine paths for a round trip
 			List<Vector3> fullTrip = new List<Vector3>(toMarket);
-			// Skip the first point of the return trip as it's the same as the last point of toMarket
 			for (int i = 1; i < toHome.Length; i++)
 			{
 				fullTrip.Add(toHome[i]);

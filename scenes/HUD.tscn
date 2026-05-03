@@ -1,14 +1,56 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/HUD.cs" id="1_hud"]
-
 [ext_resource type="PackedScene" path="res://scenes/BuildingInfoPopup.tscn" id="2_popup"]
+[ext_resource type="PackedScene" path="res://scenes/PauseMenu.tscn" id="3_pause"]
+[ext_resource type="PackedScene" path="res://scenes/SaveLoadDialog.tscn" id="4_saveload"]
 
 [node name="root" type="CanvasLayer"]
 script = ExtResource("1_hud")
 
+[node name="PauseMenu" parent="." instance=ExtResource("3_pause")]
+visible = false
+
+[node name="SaveLoadDialog" parent="." instance=ExtResource("4_saveload")]
+visible = false
+
 [node name="BuildingInfoPopup" parent="." instance=ExtResource("2_popup")]
 visible = false
+
+[node name="TimeContainer" type="MarginContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -250.0
+offset_bottom = 80.0
+grow_horizontal = 0
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TimeContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 2
+
+[node name="Speed0" type="Button" parent="TimeContainer/HBoxContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+text = "||"
+
+[node name="Speed1" type="Button" parent="TimeContainer/HBoxContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+text = ">"
+
+[node name="Speed2" type="Button" parent="TimeContainer/HBoxContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+text = ">>"
+
+[node name="Speed4" type="Button" parent="TimeContainer/HBoxContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+text = ">>>"
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 offset_right = 200.0
@@ -21,17 +63,20 @@ layout_mode = 2
 
 [node name="PopLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 24
 text = "Population: 0"
 
 [node name="FoodLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "Food: 0"
+theme_override_font_sizes/font_size = 24
+text = "Food: 100"
 
 [node name="WoodLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "Wood: 0"
+theme_override_font_sizes/font_size = 24
+text = "Wood: 50"
 
-[node name="BottomBar" type="PanelContainer" parent="."]
+[node name="BottomBar" type="Panel" parent="."]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -41,26 +86,30 @@ grow_horizontal = 2
 grow_vertical = 0
 
 [node name="MarginContainer" type="MarginContainer" parent="BottomBar"]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_right = 20
 
 [node name="HBoxContainer" type="HBoxContainer" parent="BottomBar/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 15
-alignment = 1
-
-[node name="BuildHouse" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 50)
-layout_mode = 2
-size_flags_vertical = 4
-text = "Build House"
+theme_override_constants/separation = 20
 
 [node name="BuildRoad" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Build Road"
+
+[node name="BuildHouse" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Build House"
 
 [node name="BuildTownCenter" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(120, 50)
@@ -80,8 +129,14 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "Stable"
 
+[node name="BuildGuild" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Builder Guild"
+
 [node name="MarketInfo" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
-text = "Market"
+text = "Market Info"

@@ -1,0 +1,42 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/BuilderGuild.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/entities/BuilderAgent.tscn" id="2_builder"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Guild"]
+albedo_color = Color(0.35, 0.25, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Guild"]
+material = SubResource("StandardMaterial3D_Guild")
+size = Vector3(3, 2.5, 3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Beams"]
+albedo_color = Color(0.2, 0.1, 0.05, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Beam"]
+material = SubResource("StandardMaterial3D_Beams")
+size = Vector3(0.3, 3, 0.3)
+
+[node name="BuilderGuild" type="Node3D"]
+script = ExtResource("1_script")
+BuilderScene = ExtResource("2_builder")
+
+[node name="Main" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+mesh = SubResource("BoxMesh_Guild")
+
+[node name="Beam1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.5, 1.4)
+mesh = SubResource("BoxMesh_Beam")
+
+[node name="Beam2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.5, 1.4)
+mesh = SubResource("BoxMesh_Beam")
+
+[node name="Beam3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.5, -1.4)
+mesh = SubResource("BoxMesh_Beam")
+
+[node name="Beam4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.5, -1.4)
+mesh = SubResource("BoxMesh_Beam")

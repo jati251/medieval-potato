@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/BuilderAgent.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/entities/Potato3D.tscn" id="2_potato"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Builder"]
+albedo_color = Color(1, 0.7, 0.1, 1)
+
+[node name="BuilderAgent" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Potato3D" parent="." instance=ExtResource("2_potato")]
+
+[node name="Mesh" parent="Potato3D" index="0"]
+surface_material_override/0 = SubResource("StandardMaterial3D_Builder")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+billboard = 1
+text = "Builder"
+font_size = 32
+outline_size = 8
+modulate = Color(1, 0.8, 0.2, 1)
