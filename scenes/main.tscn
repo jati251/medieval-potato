@@ -14,15 +14,25 @@
 [ext_resource type="Script" path="res://scripts/entities/RoadManager.cs" id="9_road_mgr"]
 [ext_resource type="PackedScene" path="res://scenes/entities/RoadSegment.tscn" id="10_road_seg"]
 [ext_resource type="Script" path="res://scripts/entities/BuildingManager.cs" id="11_build_mgr"]
+[ext_resource type="PackedScene" path="res://scenes/entities/TownCenter.tscn" id="12_town"]
+[ext_resource type="PackedScene" path="res://scenes/entities/MeatShop.tscn" id="13_meat"]
+[ext_resource type="PackedScene" path="res://scenes/entities/HorseStable.tscn" id="14_stable"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.2, 0.5, 0.2, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1"]
 material = SubResource("StandardMaterial3D_1")
-size = Vector2(100, 100)
+size = Vector2(500, 500)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+sky_top_color = Color(0.38, 0.58, 0.9, 1)
+sky_horizon_color = Color(0.64, 0.75, 0.9, 1)
+ground_bottom_color = Color(0.2, 0.16, 0.13, 1)
+ground_horizon_color = Color(0.64, 0.75, 0.9, 1)
 
 [sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 2
@@ -30,8 +40,8 @@ sky = SubResource("Sky_1")
 tonemap_mode = 2
 glow_enabled = true
 fog_enabled = true
-fog_light_color = Color(0.2, 0.4, 0.2, 1)
-fog_density = 0.02
+fog_light_color = Color(0.6, 0.75, 0.9, 1)
+fog_density = 0.005
 fog_aerial_perspective = 1.0
 
 [sub_resource type="Curve3D" id="Curve3D_1"]
@@ -57,6 +67,9 @@ GroundPath = NodePath("../Ground")
 [node name="BuildingManager" type="Node3D" parent="."]
 script = ExtResource("11_build_mgr")
 HouseScene = ExtResource("2_house")
+TownCenterScene = ExtResource("12_town")
+MeatShopScene = ExtResource("13_meat")
+HorseStableScene = ExtResource("14_stable")
 GroundPath = NodePath("../Ground")
 
 [node name="AmbienceManager" type="Node" parent="."]

@@ -12,7 +12,7 @@ public partial class RoadManager : Node3D
 	private long _lastPointId = -1;
 	private MeshInstance3D _ground;
 	private Camera3D _camera;
-	private MeshInstance3D _previewSegment;
+	private Node3D _previewContainer;
 	
 	private AStar3D _astar = new AStar3D();
 	private long _pointCounter = 0;
@@ -21,6 +21,9 @@ public partial class RoadManager : Node3D
 	{
 		_ground = GetNode<MeshInstance3D>(GroundPath);
 		_camera = GetViewport().GetCamera3D();
+		
+		_previewContainer = new Node3D();
+		AddChild(_previewContainer);
 	}
 
 	public void ToggleBuilding(bool active)
@@ -28,30 +31,60 @@ public partial class RoadManager : Node3D
 		_isBuilding = active;
 		_lastPoint = null;
 		_lastPointId = -1;
-
-		if (_isBuilding)
-		{
-			if (_previewSegment == null)
-			{
-				_previewSegment = RoadSegmentScene.Instantiate<MeshInstance3D>();
-				AddChild(_previewSegment);
-			}
-			_previewSegment.Visible = true;
-		}
-		else if (_previewSegment != null)
-		{
-			_previewSegment.Visible = false;
-		}
+		ClearPreview();
 	}
 
 	public override void _Process(double delta)
 	{
-		if (_isBuilding && _previewSegment != null)
+		if (!_isBuilding) return;
+
+		ClearPreview();
+		Vector3? mousePos = GetMouseWorldPosition();
+		if (!mousePos.HasValue) return;
+
+		Vector3 currentPos = mousePos.Value;
+		currentPos.Y = 0.05f;
+
+		if (_lastPoint.HasValue)
 		{
-			Vector3? mousePos = GetMouseWorldPosition();
-			if (mousePos.HasValue)
+			// Preview a line of segments from last point to mouse
+			ShowRoadPreview(_lastPoint.Value, currentPos);
+		}
+		else
+		{
+			// Just a single cursor preview
+			var segment = RoadSegmentScene.Instantiate<MeshInstance3D>();
+			_previewContainer.AddChild(segment);
+			segment.GlobalPosition = currentPos;
+		}
+	}
+
+	private void ClearPreview()
+	{
+		foreach (var child in _previewContainer.GetChildren())
+		{
+			child.QueueFree();
+		}
+	}
+
+	private void ShowRoadPreview(Vector3 start, Vector3 end)
+	{
+		float distance = start.DistanceTo(end);
+		int segments = Mathf.CeilToInt(distance / 2.0f);
+		
+		for (int i = 0; i <= segments; i++)
+		{
+			float t = (float)i / segments;
+			Vector3 pos = start.Lerp(end, t);
+			
+			var segment = RoadSegmentScene.Instantiate<MeshInstance3D>();
+			_previewContainer.AddChild(segment);
+			segment.GlobalPosition = new Vector3(pos.X, 0.05f, pos.Z);
+			
+			if (start != end)
 			{
-				_previewSegment.GlobalPosition = new Vector3(mousePos.Value.X, 0.05f, mousePos.Value.Z);
+				segment.LookAt(end, Vector3.Up);
+				segment.RotateY(Mathf.Pi / 2);
 			}
 		}
 	}

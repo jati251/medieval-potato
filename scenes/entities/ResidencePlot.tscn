@@ -6,8 +6,25 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.4, 0.25, 0.15, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Roof"]
+albedo_color = Color(0.45, 0.15, 0.1, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_Roof"]
+material = SubResource("StandardMaterial3D_Roof")
+size = Vector3(2.5, 1.5, 2.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Stone"]
+albedo_color = Color(0.3, 0.3, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Chimney"]
+material = SubResource("StandardMaterial3D_Stone")
+size = Vector3(0.4, 1.5, 0.4)
+
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 material = SubResource("StandardMaterial3D_1")
+size = Vector3(2, 2, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(2, 2, 2)
 
 [node name="root" type="Node3D"]
@@ -17,5 +34,18 @@ PopScene = ExtResource("2_pop")
 [node name="HouseMesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 mesh = SubResource("BoxMesh_1")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="HouseMesh"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HouseMesh/StaticBody3D"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+mesh = SubResource("PrismMesh_Roof")
+
+[node name="Chimney" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 1.5, 0.5)
+mesh = SubResource("BoxMesh_Chimney")
 
 [node name="Timer" type="Timer" parent="."]

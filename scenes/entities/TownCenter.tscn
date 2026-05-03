@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Wall"]
+albedo_color = Color(0.6, 0.55, 0.5, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Main"]
+material = SubResource("StandardMaterial3D_Wall")
+size = Vector3(4, 3, 4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Roof"]
+albedo_color = Color(0.1, 0.1, 0.1, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_Roof"]
+material = SubResource("StandardMaterial3D_Roof")
+size = Vector3(4.5, 2, 4.5)
+
+[node name="TownCenter" type="Node3D"]
+
+[node name="MainBuilding" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+mesh = SubResource("BoxMesh_Main")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("PrismMesh_Roof")
+
+[node name="Tower" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 3, 1.5)
+mesh = SubResource("BoxMesh_Main")
+scale = Vector3(0.4, 2, 0.4)

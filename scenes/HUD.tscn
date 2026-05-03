@@ -2,8 +2,13 @@
 
 [ext_resource type="Script" path="res://scripts/HUD.cs" id="1_hud"]
 
+[ext_resource type="PackedScene" path="res://scenes/BuildingInfoPopup.tscn" id="2_popup"]
+
 [node name="root" type="CanvasLayer"]
 script = ExtResource("1_hud")
+
+[node name="BuildingInfoPopup" parent="." instance=ExtResource("2_popup")]
+visible = false
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 offset_right = 200.0
@@ -56,6 +61,24 @@ custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Build Road"
+
+[node name="BuildTownCenter" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Town Center"
+
+[node name="BuildMeatShop" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Meat Shop"
+
+[node name="BuildStable" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Stable"
 
 [node name="MarketInfo" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(120, 50)

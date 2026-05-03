@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Wall"]
+albedo_color = Color(0.5, 0.4, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Shop"]
+material = SubResource("StandardMaterial3D_Wall")
+size = Vector3(2, 2, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Stall"]
+albedo_color = Color(0.8, 0.2, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Counter"]
+material = SubResource("StandardMaterial3D_Stall")
+size = Vector3(1.5, 0.2, 0.8)
+
+[node name="MeatShop" type="Node3D"]
+
+[node name="Building" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("BoxMesh_Shop")
+
+[node name="Stall" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 1.2)
+mesh = SubResource("BoxMesh_Counter")

@@ -4,9 +4,13 @@ using System;
 public partial class BuildingManager : Node3D
 {
 	[Export] public PackedScene HouseScene { get; set; }
+	[Export] public PackedScene TownCenterScene { get; set; }
+	[Export] public PackedScene MeatShopScene { get; set; }
+	[Export] public PackedScene HorseStableScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
+	private PackedScene _currentScene;
 	private Camera3D _camera;
 	private MeshInstance3D _ground;
 	private Node3D _previewHouse;
@@ -15,6 +19,22 @@ public partial class BuildingManager : Node3D
 	{
 		_ground = GetNode<MeshInstance3D>(GroundPath);
 		_camera = GetViewport().GetCamera3D();
+		_currentScene = HouseScene;
+	}
+
+	public void SetBuildingType(string type)
+	{
+		switch (type)
+		{
+			case "House": _currentScene = HouseScene; break;
+			case "TownCenter": _currentScene = TownCenterScene; break;
+			case "MeatShop": _currentScene = MeatShopScene; break;
+			case "HorseStable": _currentScene = HorseStableScene; break;
+		}
+		
+		// Reset preview
+		if (_previewHouse != null) { _previewHouse.QueueFree(); _previewHouse = null; }
+		if (_isBuilding) ToggleBuilding(true);
 	}
 
 	public void ToggleBuilding(bool active)
@@ -25,10 +45,8 @@ public partial class BuildingManager : Node3D
 		{
 			if (_previewHouse == null)
 			{
-				_previewHouse = HouseScene.Instantiate<Node3D>();
+				_previewHouse = _currentScene.Instantiate<Node3D>();
 				AddChild(_previewHouse);
-				// Make it look like a ghost (semi-transparent)
-				// Note: Real transparency requires material override, but for now we'll just show it
 			}
 			_previewHouse.Visible = true;
 		}
@@ -52,16 +70,61 @@ public partial class BuildingManager : Node3D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (!_isBuilding) return;
-
 		if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed && mouseButton.ButtonIndex == MouseButton.Left)
 		{
-			Vector3? spawnPos = GetMouseWorldPosition();
-			if (spawnPos.HasValue)
+			if (_isBuilding)
 			{
-				PlaceHouse(spawnPos.Value);
+				Vector3? spawnPos = GetMouseWorldPosition();
+				if (spawnPos.HasValue)
+				{
+					PlaceBuilding(spawnPos.Value);
+				}
+			}
+			else
+			{
+				CheckForBuildingClick();
 			}
 		}
+	}
+
+	private void CheckForBuildingClick()
+	{
+		Vector2 mousePos = GetViewport().GetMousePosition();
+		Vector3 rayOrigin = _camera.ProjectRayOrigin(mousePos);
+		Vector3 rayDirection = _camera.ProjectRayNormal(mousePos);
+		
+		var spaceState = GetWorld3D().DirectSpaceState;
+		var query = PhysicsRayQueryParameters3D.Create(rayOrigin, rayOrigin + rayDirection * 1000);
+		var result = spaceState.IntersectRay(query);
+		
+		if (result.Count > 0)
+		{
+			Node collider = (Node)result["collider"];
+			Node parent = collider.GetParent();
+			
+			// We check both the parent and the parent's parent just in case
+			if (parent is ResidencePlot house || parent.GetParent() is ResidencePlot house2)
+			{
+				var actualHouse = parent is ResidencePlot ? (ResidencePlot)parent : (ResidencePlot)parent.GetParent();
+				GetTree().Root.GetNode<HUD>("root/HUD").ShowBuildingInfo(actualHouse, "Peasant House", $"Residents: {actualHouse.ResidentCount} / 5\nStatus: Cozy");
+			}
+			else
+			{
+				// Generic building info
+				string bName = parent.Name.ToString();
+				GetTree().Root.GetNode<HUD>("root/HUD").ShowBuildingInfo((Node3D)parent, bName, "A fine addition to the village.\nStatus: Standing");
+			}
+		}
+	}
+
+	private void PlaceBuilding(Vector3 position)
+	{
+		if (_currentScene == null) return;
+
+		var building = _currentScene.Instantiate<Node3D>();
+		GetTree().Root.GetNode("root").AddChild(building);
+		building.GlobalPosition = position;
+		building.RotateY((float)GD.RandRange(0, Mathf.Pi * 2));
 	}
 
 	private Vector3? GetMouseWorldPosition()
@@ -79,19 +142,5 @@ public partial class BuildingManager : Node3D
 		}
 		
 		return null;
-	}
-
-	private void PlaceHouse(Vector3 position)
-	{
-		if (HouseScene == null) return;
-
-		var house = HouseScene.Instantiate<Node3D>();
-		GetTree().Root.GetNode("root").AddChild(house);
-		house.GlobalPosition = position;
-		
-		// Optional: Random rotation for organic feel
-		house.RotateY((float)GD.RandRange(0, Mathf.Pi * 2));
-		
-		GD.Print("House placed at: " + position);
 	}
 }

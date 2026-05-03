@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Stable"]
+albedo_color = Color(0.3, 0.2, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Long"]
+material = SubResource("StandardMaterial3D_Stable")
+size = Vector3(5, 1.5, 2)
+
+[node name="HorseStable" type="Node3D"]
+
+[node name="Main" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+mesh = SubResource("BoxMesh_Long")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+mesh = SubResource("BoxMesh_Long")
+scale = Vector3(1.1, 0.2, 1.1)

@@ -7,56 +7,80 @@ public partial class RTSCamera : Camera3D
 	[Export] public float ZoomSpeed { get; set; } = 2.0f;
 	[Export] public float RotateSpeed { get; set; } = 2.0f;
 	
-	private Vector3 _targetPosition;
+	private Vector3 _groundPosition;
 	private float _targetZoom = 15.0f;
-	private float _targetRotation = 0.0f;
 
 	public override void _Ready()
 	{
-		_targetPosition = GlobalPosition;
-		_targetRotation = Rotation.Y;
+		_groundPosition = new Vector3(GlobalPosition.X, 0, GlobalPosition.Z);
+	}
+
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is InputEventMouseButton mouseButton)
+		{
+			if (mouseButton.ButtonIndex == MouseButton.WheelUp)
+				_targetZoom = Mathf.Clamp(_targetZoom - ZoomSpeed, 5.0f, 40.0f);
+			if (mouseButton.ButtonIndex == MouseButton.WheelDown)
+				_targetZoom = Mathf.Clamp(_targetZoom + ZoomSpeed, 5.0f, 40.0f);
+		}
 	}
 
 	public override void _Process(double delta)
 	{
 		float fDelta = (float)delta;
 		HandleMovement(fDelta);
-		HandleZoom(fDelta);
 		HandleRotation(fDelta);
+		ApplyCameraTransform(fDelta);
 	}
 
 	private void HandleMovement(float delta)
 	{
 		Vector3 inputDir = Vector3.Zero;
 		
-		if (Input.IsActionPressed("ui_up") || Input.IsKeyPressed(Key.W)) inputDir.Z -= 1;
-		if (Input.IsActionPressed("ui_down") || Input.IsKeyPressed(Key.S)) inputDir.Z += 1;
-		if (Input.IsActionPressed("ui_left") || Input.IsKeyPressed(Key.A)) inputDir.X -= 1;
-		if (Input.IsActionPressed("ui_right") || Input.IsKeyPressed(Key.D)) inputDir.X += 1;
+		if (Input.IsKeyPressed(Key.W) || Input.IsKeyPressed(Key.Up)) inputDir.Z -= 1;
+		if (Input.IsKeyPressed(Key.S) || Input.IsKeyPressed(Key.Down)) inputDir.Z += 1;
+		if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left)) inputDir.X -= 1;
+		if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right)) inputDir.X += 1;
 
-		inputDir = inputDir.Rotated(Vector3.Up, Rotation.Y).Normalized();
-		GlobalPosition += inputDir * MoveSpeed * delta;
+		if (inputDir.Length() > 0)
+		{
+			Vector3 forward = -Transform.Basis.Z;
+			forward.Y = 0;
+			forward = forward.Normalized();
+
+			Vector3 right = Transform.Basis.X;
+			right.Y = 0;
+			right = right.Normalized();
+
+			Vector3 moveDir = (forward * -inputDir.Z) + (right * inputDir.X);
+			_groundPosition += moveDir.Normalized() * MoveSpeed * delta;
+			
+			// Keep within bounds
+			_groundPosition.X = Mathf.Clamp(_groundPosition.X, -240, 240);
+			_groundPosition.Z = Mathf.Clamp(_groundPosition.Z, -240, 240);
+		}
 	}
 
-	private void HandleZoom(float delta)
+	private void ApplyCameraTransform(float delta)
 	{
-		if (Input.IsMouseButtonPressed(MouseButton.WheelUp))
-			_targetZoom -= ZoomSpeed;
-		if (Input.IsMouseButtonPressed(MouseButton.WheelDown))
-			_targetZoom += ZoomSpeed;
-
-		_targetZoom = Mathf.Clamp(_targetZoom, 5.0f, 40.0f);
+		// Smoothly interpolate the ground position and the zoom height
+		Vector3 targetPos = _groundPosition;
+		targetPos.Y = Mathf.Lerp(GlobalPosition.Y, _targetZoom, delta * 8.0f);
+		targetPos.Z += Mathf.Lerp(GlobalPosition.Z - _groundPosition.Z, _targetZoom, delta * 8.0f);
 		
-		// In an RTS camera, zoom is often just moving the camera along its local Z or changing height
-		// For simplicity, let's just adjust the Y height and Z offset
-		Position = new Vector3(Position.X, Mathf.Lerp(Position.Y, _targetZoom, delta * 5.0f), Position.Z);
+		GlobalPosition = new Vector3(
+			Mathf.Lerp(GlobalPosition.X, _groundPosition.X, delta * 10.0f),
+			Mathf.Lerp(GlobalPosition.Y, _targetZoom, delta * 8.0f),
+			Mathf.Lerp(GlobalPosition.Z, _groundPosition.Z + _targetZoom, delta * 8.0f)
+		);
 	}
 
 	private void HandleRotation(float delta)
 	{
 		if (Input.IsKeyPressed(Key.Q))
-			RotationDegrees = new Vector3(RotationDegrees.X, RotationDegrees.Y + RotateSpeed, RotationDegrees.Z);
+			RotationDegrees = new Vector3(RotationDegrees.X, RotationDegrees.Y + RotateSpeed * 50.0f * delta, RotationDegrees.Z);
 		if (Input.IsKeyPressed(Key.E))
-			RotationDegrees = new Vector3(RotationDegrees.X, RotationDegrees.Y - RotateSpeed, RotationDegrees.Z);
+			RotationDegrees = new Vector3(RotationDegrees.X, RotationDegrees.Y - RotateSpeed * 50.0f * delta, RotationDegrees.Z);
 	}
 }
