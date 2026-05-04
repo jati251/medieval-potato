@@ -76,11 +76,6 @@ mesh = SubResource("BoxMesh_Window")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 1.2, 0)
 mesh = SubResource("BoxMesh_Window")
 
-[node name="StatusLabel" type="Label3D" parent="Visuals"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
-billboard = 1
-text = "Pops: 0"
-font_size = 48
 
 [node name="NightLight" type="OmniLight3D" parent="Visuals"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

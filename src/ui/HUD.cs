@@ -200,7 +200,7 @@ public partial class HUD : CanvasLayer
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Pressed += () => SelectCategory("Tech");
 
 		var btns = new Dictionary<string, string> {
-			{"GeneralGroup/BuildRoad", null},
+			// {"GeneralGroup/BuildRoad", null}, // Natural roads now!
 			{"GeneralGroup/BuildHouse", "House"},
 			{"GeneralGroup/BuildTownCenter", "TownCenter"},
 			{"FoodGroup/BuildMeatShop", "MeatShop"},
@@ -368,8 +368,9 @@ public partial class HUD : CanvasLayer
 			}
 		}
 
+		// Road button hidden
 		var roadBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/BuildRoad");
-		if (roadBtn != null) roadBtn.Text = _isRoadMode ? "STOP ROAD" : "Build Road";
+		if (roadBtn != null) roadBtn.Visible = false;
 		
 		if (_isHouseMode)
 		{

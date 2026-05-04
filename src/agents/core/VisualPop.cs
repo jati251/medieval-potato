@@ -5,9 +5,24 @@ public partial class VisualPop : Node3D
 {
 	[Export] public float WalkSpeed { get; set; } = 2.0f;
 	
+	private RoadManager _roadManager;
+	private float _footprintTimer = 0.0f;
+
 	public override void _Ready()
 	{
-		// We'll use this method to trigger the walk once properties are set
+		_roadManager = GetTree().Root.FindChild("RoadManager", true, false) as RoadManager;
+	}
+
+	public override void _Process(double delta)
+	{
+		if (_roadManager == null) return;
+
+		_footprintTimer += (float)delta;
+		if (_footprintTimer >= 0.5f) // Register every 0.5s
+		{
+			_footprintTimer = 0.0f;
+			_roadManager.RegisterFootprint(GlobalPosition);
+		}
 	}
 
 	public void WalkPath(Vector3[] path)

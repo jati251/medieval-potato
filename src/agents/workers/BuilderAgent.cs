@@ -11,11 +11,14 @@ public partial class BuilderAgent : Node3D
 	private GlobalSimulation _sim;
 
 	private AnimationPlayer _anim;
+	private RoadManager _roadManager;
+	private float _footprintTimer = 0.0f;
 
 	public override void _Ready()
 	{
 		_sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
 		_anim = GetNode<AnimationPlayer>("Potato3D/AnimationPlayer");
+		_roadManager = GetTree().Root.FindChild("RoadManager", true, false) as RoadManager;
 	}
 
 	public void AssignTask(ResidencePlot project, Vector3[] path)
@@ -33,6 +36,14 @@ public partial class BuilderAgent : Node3D
 		{
 			MoveAlongPath(delta);
 			if (_anim != null) _anim.SpeedScale = 1.0f;
+
+			// Register footprint
+			_footprintTimer += (float)delta;
+			if (_footprintTimer >= 0.5f)
+			{
+				_footprintTimer = 0.0f;
+				if (_roadManager != null) _roadManager.RegisterFootprint(GlobalPosition);
+			}
 		}
 		else if (_targetProject != null && !_targetProject.IsConstructed)
 		{
