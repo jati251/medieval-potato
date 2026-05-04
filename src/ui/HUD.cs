@@ -38,13 +38,68 @@ public partial class HUD : CanvasLayer
 		Input.MouseMode = Input.MouseModeEnum.Visible; 
 	}
 
-	public void ShowBuildingInfo(Node3D target, string title, string info)
+	public void ShowBuildingInfo(Node3D target, string title)
 	{
 		if (_infoPopup == null) return;
 		_followTarget = target;
 		_infoPopup.GetNode<Label>("Panel/VBoxContainer/TitleLabel").Text = title;
-		_infoPopup.GetNode<Label>("Panel/VBoxContainer/InfoLabel").Text = info;
+		UpdateBuildingInfoDisplay();
 		_infoPopup.Visible = true;
+	}
+
+	private void UpdateBuildingInfoDisplay()
+	{
+		if (_followTarget == null || _infoPopup == null) return;
+
+		string info = "";
+		string name = _followTarget.Name.ToString();
+
+		if (_followTarget is ResidencePlot house)
+		{
+			if (house.IsConstructed)
+				info = $"[ POPULATION ]\nResidents: {house.ResidentCount} / 5\n\n[ STATUS ]\nCozy and Warm\nContributing to Village";
+			else
+				info = $"[ CONSTRUCTION ]\nProgress: {house.ConstructionProgress:F1}%\n\n[ STATUS ]\nIn Progress\nWaiting for Builders";
+		}
+		else if (_followTarget is TownCenter)
+		{
+			float current = _sim.Food + _sim.Wood;
+			info = $"[ STORAGE ]\nFood: {_sim.Food:F1}\nWood: {_sim.Wood:F1}\nTotal: {Mathf.RoundToInt(current)} / {Mathf.RoundToInt(_sim.StorageCapacity)}\n\n[ STATUS ]\nVillage Heart";
+		}
+		else if (name.Contains("Woodcutter"))
+		{
+			info = "[ PRODUCTION ]\nHarvesting Trees\nWorkers: 2\nStatus: Active";
+		}
+		else if (name.Contains("Forager"))
+		{
+			info = "[ PRODUCTION ]\nGathering Berries\nWorkers: 2\nStatus: Active";
+		}
+		else if (name.Contains("Fishing"))
+		{
+			info = "[ PRODUCTION ]\nGathering Fish\nWorkers: 2\nStatus: Active";
+		}
+		else if (name.Contains("Hunter"))
+		{
+			info = "[ PRODUCTION ]\nHunting Game\nWorkers: 1\nStatus: Active";
+		}
+		else if (name.Contains("MeatShop"))
+		{
+			info = "[ COMMERCE ]\nSelling Fine Meats\nStatus: Open for Business";
+		}
+		else if (name.Contains("Stable"))
+		{
+			info = "[ SERVICE ]\nHousing Noble Steeds\nStatus: Operational";
+		}
+		else if (name.Contains("Guild"))
+		{
+			info = "[ SERVICE ]\nActive Builders: 2\nStatus: Employed";
+		}
+		else
+		{
+			info = "A fine addition to the village.\nStatus: Standing";
+		}
+
+		_infoPopup.GetNode<Label>("Panel/VBoxContainer/InfoLabel").Text = info;
 	}
 
 	private void OnClosePopup()
@@ -349,6 +404,9 @@ public partial class HUD : CanvasLayer
 			Vector3 worldPos = _followTarget.GlobalPosition + Vector3.Up * 2.5f;
 			Vector2 screenPos = _camera.UnprojectPosition(worldPos);
 			_infoPopup.Position = screenPos - (_infoPopup.GetNode<Control>("Panel").Size / 2.0f);
+			
+			// Dynamic Update
+			UpdateBuildingInfoDisplay();
 		}
 		
 		_popLabel.Text = $"Population: {_sim.Population} ({_sim.UnemployedPopulation} Unemployed)";

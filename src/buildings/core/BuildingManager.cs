@@ -321,47 +321,20 @@ public partial class BuildingManager : Node3D
 
 	private void ShowBuildingInfo(Node3D building)
 	{
-		if (building is ResidencePlot actualHouse)
-		{
-			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-			string info = "";
-			if (actualHouse.IsConstructed)
-			{
-				info = $"[ POPULATION ]\nResidents: {actualHouse.ResidentCount} / 5\n\n[ STATUS ]\nCozy and Warm\nContributing to Village";
-			}
-			else
-			{
-				info = $"[ CONSTRUCTION ]\nProgress: {actualHouse.ConstructionProgress:F1}%\n\n[ STATUS ]\nIn Progress\nWaiting for Builders";
-			}
-			if (hud != null) hud.ShowBuildingInfo(actualHouse, "Peasant House", info);
-		}
-		else if (building is BuilderGuild guild)
-		{
-			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-			if (hud != null) hud.ShowBuildingInfo(guild, "Builder's Guild", "Active Builders: 2\nStatus: Employed");
-		}
-		else if (building is ForagerHut hut)
-		{
-			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-			if (hud != null) hud.ShowBuildingInfo(hut, "Forager Hut", "Gathering Berries\nWorkers: 2\nStatus: Active");
-		}
-		else if (building is FishingHut fHut)
-		{
-			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-			if (hud != null) hud.ShowBuildingInfo(fHut, "Fishing Hut", "Gathering Fish\nWorkers: 2\nStatus: Active");
-		}
-		else if (building is WoodcutterHut wHut)
-		{
-			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-			if (hud != null) hud.ShowBuildingInfo(wHut, "Woodcutter Hut", "Harvesting Trees\nWorkers: 2\nStatus: Active");
-		}
-		else
-		{
-			// Generic building info
-			string bName = building.Name.ToString();
-			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-			if (hud != null) hud.ShowBuildingInfo(building, bName, "A fine addition to the village.\nStatus: Standing");
-		}
+		var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+		if (hud == null) return;
+
+		string title = "Building";
+		if (building is ResidencePlot) title = "Peasant House";
+		else if (building is TownCenter) title = "Town Center";
+		else if (building is BuilderGuild) title = "Builder's Guild";
+		else if (building is ForagerHut) title = "Forager Hut";
+		else if (building is FishingHut) title = "Fishing Hut";
+		else if (building is WoodcutterHut) title = "Woodcutter Hut";
+		else if (building is HunterHut) title = "Hunter Hut";
+		else title = building.Name.ToString();
+
+		hud.ShowBuildingInfo(building, title);
 	}
 
 	private struct RayResult

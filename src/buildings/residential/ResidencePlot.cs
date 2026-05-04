@@ -103,12 +103,6 @@ public partial class ResidencePlot : Node3D
 				if (w2 != null) w2.Visible = isNight;
 			}
 		}
-
-		var label = GetNodeOrNull<Label3D>("Visuals/StatusLabel");
-		if (label != null)
-		{
-			label.Text = $"Pops: {ResidentCount}";
-		}
 	}
 
 	private void OnSpawnTimerTimeout()
