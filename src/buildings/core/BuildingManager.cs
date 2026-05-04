@@ -18,6 +18,7 @@ public partial class BuildingManager : Node3D
 	private bool _isBuilding = false;
 	private bool _isBulldozing = false;
 	private bool _isZoning = false;
+	private bool _isZoningErase = false;
 	private PackedScene _currentScene;
 	private Camera3D _camera;
 	private Node3D _ground;
@@ -172,6 +173,20 @@ public partial class BuildingManager : Node3D
 		}
 		var zoneMgr = GetTree().Root.FindChild("ZoneManager", true, false) as ZoneManager;
 		if (zoneMgr != null) zoneMgr.IsPainting = active;
+		_isZoningErase = false; 
+	}
+
+	public void SetZoneEraseMode(bool active)
+	{
+		_isZoning = active;
+		if (_isZoning)
+		{
+			ToggleBuilding(false);
+			_isBulldozing = false;
+			_isZoningErase = true;
+		}
+		var zoneMgr = GetTree().Root.FindChild("ZoneManager", true, false) as ZoneManager;
+		if (zoneMgr != null) zoneMgr.IsPainting = active;
 	}
 
 	public void ToggleBuilding(bool active)
@@ -292,7 +307,8 @@ public partial class BuildingManager : Node3D
 			var res = GetMouseWorldPosition();
 			if (res.Hit && _zoneManager != null)
 			{
-				_zoneManager.PaintZone(res.Position);
+				if (_isZoningErase) _zoneManager.EraseZone(res.Position);
+				else _zoneManager.PaintZone(res.Position);
 			}
 		}
 		else if (Input.IsMouseButtonPressed(MouseButton.Right))

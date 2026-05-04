@@ -9,6 +9,8 @@ public partial class ForagerHut : StaticBody3D
 
     private int _assignedWorkers = 0;
     private float _totalBerriesHarvested = 0;
+    public float LocalStorage { get; set; } = 0;
+    public string ResourceType => "Food";
     private GlobalSimulation _sim;
     private Timer _assignmentTimer;
     private Timer _spawnTimer;
@@ -67,19 +69,25 @@ public partial class ForagerHut : StaticBody3D
         if (roadMgr != null)
         {
             Vector3[] toBush = roadMgr.GetRoadPath(GlobalPosition, target.GlobalPosition);
-            Vector3[] toHut = roadMgr.GetRoadPath(target.GlobalPosition, GlobalPosition);
+            
+            // Return Home logic
+            ResidencePlot home = _sim.GetRandomHouse();
+            Vector3 finalDest = GlobalPosition; // Default back to hut
+            if (home != null) finalDest = home.GlobalPosition;
+
+            Vector3[] toDest = roadMgr.GetRoadPath(target.GlobalPosition, finalDest);
             
             List<Vector3> fullTrip = new List<Vector3>(toBush);
-            for (int i = 1; i < toHut.Length; i++)
+            for (int i = 1; i < toDest.Length; i++)
             {
-                fullTrip.Add(toHut[i]);
+                fullTrip.Add(toDest[i]);
             }
 
             forager.WalkPath(fullTrip.ToArray());
             
-            // Add food when they finish
+            // Add food to local storage
             float harvested = target.Harvest(5.0f);
-            _sim.Food += harvested;
+            LocalStorage += harvested;
             _totalBerriesHarvested += harvested;
         }
     }

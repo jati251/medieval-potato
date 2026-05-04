@@ -11,11 +11,18 @@ public partial class Animal : Node3D
     private float _waitTimer = 0.0f;
     public bool IsTargeted { get; set; } = false;
 
-    public void Hunt()
+    public void Hunt(HunterHut hut)
     {
-        // Add food to sim
-        var sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
-        sim.Food += 15.0f;
+        // Add food to local storage
+        if (hut != null)
+        {
+            hut.LocalStorage += 15.0f;
+        }
+        else
+        {
+            var sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
+            sim.Food += 15.0f;
+        }
         
         // Death animation: shrink and disappear
         Tween tween = CreateTween();

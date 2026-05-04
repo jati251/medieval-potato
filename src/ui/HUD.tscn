@@ -114,6 +114,11 @@ custom_minimum_size = Vector2(100, 30)
 layout_mode = 2
 text = "Tech"
 
+[node name="CatZones" type="Button" parent="BottomBar/VBoxContainer/CategoryBar"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "Zones"
+
 [node name="MarginContainer" type="MarginContainer" parent="BottomBar/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -143,17 +148,29 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "Town Center"
 
-[node name="ZoneRes" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
-custom_minimum_size = Vector2(120, 50)
-layout_mode = 2
-size_flags_vertical = 4
-text = "Zone Res"
-
 [node name="Bulldoze" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "BULLDOZE"
+
+[node name="ZonesGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="ZoneRes" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/ZonesGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "ZONE RES"
+
+[node name="EraseZone" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/ZonesGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "DELETE ZONE"
 
 [node name="FoodGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
 visible = false

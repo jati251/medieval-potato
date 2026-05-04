@@ -147,8 +147,9 @@ void fragment() {
 	private void OnAutoSpawnCheck()
 	{
 		var sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
-		// Spawn houses if there's demand (unemployed) OR if we're just starting (pop < 10)
-		if (_activeZones.Count > 0 && (sim.UnemployedPopulation > 0 || sim.Population < 10))
+		// Spawn houses if there's demand (low unemployment) OR if we're just starting (pop < 25)
+		// We want to keep a small pool of unemployed people for new jobs
+		if (_activeZones.Count > 0 && (sim.UnemployedPopulation < 5 || sim.Population < 25))
 		{
 			TrySpawnHouse();
 		}
@@ -165,7 +166,10 @@ void fragment() {
 		if (_activeZones.Count == 0) return;
 
 		// Find a cluster: Pick a random spot and check if neighbors are also zoned
-		int attempts = 20; 
+		int attempts = 50; // More attempts for larger maps
+		int failWell = 0;
+		int failOccupied = 0;
+
 		while (attempts > 0)
 		{
 			attempts--;
@@ -176,7 +180,7 @@ void fragment() {
 			// Well Requirement: Must be near a Well
 			if (!IsNearWell(worldPos)) 
 			{
-				// GD.Print($"ZoneManager: Spot {worldPos} too far from Well.");
+				failWell++;
 				continue;
 			}
 
@@ -188,8 +192,13 @@ void fragment() {
 				return; 
 			}
 			else {
-				// GD.Print($"ZoneManager: Spot {worldPos} is occupied.");
+				failOccupied++;
 			}
+		}
+
+		if (failWell > 0 && failOccupied == 0)
+		{
+			GD.Print($"ZoneManager: Cannot spawn house - {failWell} spots checked were too far from a Well!");
 		}
 	}
 
@@ -200,19 +209,20 @@ void fragment() {
 		foreach (Node b in buildings)
 		{
 			string name = b.Name.ToString().ToLower();
-			bool isWell = name.Contains("well") || b.GetType().Name == "Well";
+			// Robust check: contains "well" OR is a Well type OR belongs to a well-related group
+			bool isWell = name.Contains("well") || b is Well || b.IsInGroup("Wells");
 			
 			if (isWell && b is Node3D b3d)
 			{
 				foundAnyWell = true;
 				float dist = pos.DistanceTo(b3d.GlobalPosition);
-				if (dist < 30.0f) // Increased radius to 30.0f for easier spawning
+				if (dist < 60.0f) // Increased radius to 60.0f
 					return true;
 			}
 		}
 		
 		if (!foundAnyWell) {
-			GD.Print("ZoneManager: ALERT - No Wells found in 'Buildings' group! Build one from Food menu.");
+			GD.Print("ZoneManager: ALERT - No Wells found in 'Buildings' group!");
 		}
 		return false;
 	}

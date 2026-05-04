@@ -18,6 +18,7 @@ public partial class GlobalSimulation : Node
 	[Export] public float FoodConsumptionPerPop { get; set; } = 0.5f;
 
 	private List<ResidencePlot> _pendingConstruction = new List<ResidencePlot>();
+	private List<ResidencePlot> _constructedHouses = new List<ResidencePlot>();
 
 	[Signal]
 	public delegate void SimulationTickedEventHandler();
@@ -58,6 +59,22 @@ public partial class GlobalSimulation : Node
 		{
 			_pendingConstruction.Add(site);
 		}
+	}
+
+	public void RegisterConstructedHouse(ResidencePlot house)
+	{
+		if (house != null && !_constructedHouses.Contains(house))
+		{
+			_constructedHouses.Add(house);
+		}
+	}
+
+	public ResidencePlot GetRandomHouse()
+	{
+		_constructedHouses.RemoveAll(h => !IsInstanceValid(h));
+		if (_constructedHouses.Count == 0) return null;
+		int idx = (int)(GD.Randi() % _constructedHouses.Count);
+		return _constructedHouses[idx];
 	}
 
 	public ResidencePlot GetNextConstructionProject()
@@ -193,8 +210,7 @@ public partial class GlobalSimulation : Node
 
 	private void PerformTick()
 	{
-		float foodNeeded = Population * FoodConsumptionPerPop;
-		Food -= foodNeeded;
+		// Food consumption is now handled by individual ResidencePlots for visual needs
 		if (Food < 0) Food = 0;
 		
 		// We use a safe signal emission - Godot handles dead listeners automatically 

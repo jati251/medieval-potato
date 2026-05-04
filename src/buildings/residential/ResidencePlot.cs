@@ -13,6 +13,7 @@ public partial class ResidencePlot : Node3D
 	public bool IsConstructed => ConstructionProgress >= 100.0f;
 	public bool IsAssigned { get; set; } = false;
 	public bool IsPreview { get; set; } = false;
+	public string NeedsStatus { get; private set; } = "All needs met";
 
 	private Timer _spawnTimer;
 	private Timer _moodTimer;
@@ -34,9 +35,9 @@ public partial class ResidencePlot : Node3D
 		SetupMoodEmote();
 
 		_moodTimer = new Timer();
-		_moodTimer.WaitTime = 5.0f;
+		_moodTimer.WaitTime = 10.0f; // Check needs every 10s
 		_moodTimer.Autostart = true;
-		_moodTimer.Timeout += UpdateMood;
+		_moodTimer.Timeout += UpdateNeedsAndMood;
 		AddChild(_moodTimer);
 
 		UpdateVisuals();
@@ -50,11 +51,13 @@ public partial class ResidencePlot : Node3D
 	private void SetupMoodEmote()
 	{
 		_moodEmote = new Label3D();
-		_moodEmote.Text = "😟"; // Resah emote
-		_moodEmote.FontSize = 128;
+		_moodEmote.Text = "😟"; 
+		_moodEmote.FontSize = 180; // Bigger for better visibility
 		_moodEmote.Billboard = BaseMaterial3D.BillboardModeEnum.Enabled;
-		_moodEmote.Position = Vector3.Up * 3.5f;
+		_moodEmote.Position = Vector3.Up * 4.5f; // Higher above roof
 		_moodEmote.Visible = false;
+		_moodEmote.OutlineRenderPriority = 1;
+		_moodEmote.OutlineSize = 24;
 		AddChild(_moodEmote);
 	}
 
@@ -87,6 +90,7 @@ public partial class ResidencePlot : Node3D
 		
 		ResidentCount = 5;
 		_sim.AddPopulation(ResidentCount);
+		_sim.RegisterConstructedHouse(this);
 		
 		// 75% Representative: Spawn 4 visual agents for 5 residents
 		for (int i = 0; i < 4; i++)
@@ -132,31 +136,52 @@ public partial class ResidencePlot : Node3D
 		_spawnTimer.WaitTime = GD.RandRange(15.0, 45.0);
 	}
 
-	private void UpdateMood()
+	private void UpdateNeedsAndMood()
 	{
 		if (!IsConstructed) return;
 
 		float targetHappiness = 1.0f;
+		List<string> issues = new List<string>();
 
-		// Factor 1: Proximity to Well
+		// Requirement 1: Proximity to Well (Water)
 		if (!IsNearWell())
 		{
-			targetHappiness -= 0.5f; // Big hit for no water access
+			targetHappiness -= 0.4f;
+			issues.Add("Missing Water Access");
 		}
 
-		// Factor 2: Global Food
-		if (_sim.Food <= 0)
+		// Requirement 2: Food Consumption
+		float foodNeeded = ResidentCount * 0.2f; // Reduced consumption slightly
+		if (_sim.Food >= foodNeeded)
 		{
-			targetHappiness -= 0.4f;
+			_sim.Food -= foodNeeded;
+		}
+		else
+		{
+			targetHappiness -= 0.5f; 
+			issues.Add("Starving (No Food)");
 		}
 
 		// Smoothly transition happiness
-		Happiness = Mathf.Lerp(Happiness, targetHappiness, 0.1f);
+		Happiness = Mathf.Lerp(Happiness, targetHappiness, 0.2f);
+		
+		// Update NeedsStatus string for HUD
+		if (issues.Count == 0) NeedsStatus = "All needs met";
+		else NeedsStatus = string.Join(", ", issues);
 
-		// Show emote if resah (unhappy)
+		// Show general unhappy emote
 		if (_moodEmote != null)
 		{
-			_moodEmote.Visible = Happiness < 0.6f;
+			if (Happiness < 0.7f)
+			{
+				_moodEmote.Text = "😟";
+				_moodEmote.Visible = true;
+				_moodEmote.Modulate = (Happiness < 0.4f) ? Colors.Red : Colors.Yellow;
+			}
+			else
+			{
+				_moodEmote.Visible = false;
+			}
 		}
 	}
 
@@ -165,9 +190,13 @@ public partial class ResidencePlot : Node3D
 		var buildings = GetTree().GetNodesInGroup("Buildings");
 		foreach (Node b in buildings)
 		{
-			if (b.Name.ToString().Contains("Well") && b is Node3D b3d)
+			// More robust check
+			string name = b.Name.ToString().ToLower();
+			bool isWell = name.Contains("well") || b.IsInGroup("Wells");
+			
+			if (isWell && b is Node3D b3d)
 			{
-				if (GlobalPosition.DistanceTo(b3d.GlobalPosition) < 15.0f)
+				if (GlobalPosition.DistanceTo(b3d.GlobalPosition) < 45.0f) // Increased from 15.0 to 45.0
 					return true;
 			}
 		}

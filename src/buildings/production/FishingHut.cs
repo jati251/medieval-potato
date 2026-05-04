@@ -8,6 +8,8 @@ public partial class FishingHut : StaticBody3D
     [Export] public float SearchRadius { get; set; } = 50.0f;
 
     private int _assignedWorkers = 0;
+    public float LocalStorage { get; set; } = 0;
+    public string ResourceType => "Food";
     private GlobalSimulation _sim;
     private Timer _assignmentTimer;
     private Timer _spawnTimer;
@@ -78,9 +80,9 @@ public partial class FishingHut : StaticBody3D
         boat.WalkPath(fullTrip.ToArray());
         boat.GlobalPosition = startPos;
         
-        // Add food
+        // Add food to local storage
         float harvested = target.Harvest(10.0f);
-        _sim.Food += harvested;
+        LocalStorage += harvested;
     }
 
     private Vector3[] GetRiverPath(Vector3 start, Vector3 end)

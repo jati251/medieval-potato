@@ -11,10 +11,12 @@ public partial class Tree : Node3D
     private bool _isFallen = false;
     public bool IsTargeted { get; set; } = false;
 
-    public void Chop()
+    private WoodcutterHut _currentHut;
+
+    public void Chop(WoodcutterHut hut)
     {
         if (_isFallen) return;
-
+        _currentHut = hut;
         _currentChops++;
         
         // Cutting Animation: Shake
@@ -52,9 +54,16 @@ public partial class Tree : Node3D
              .SetTrans(Tween.TransitionType.Bounce)
              .SetEase(Tween.EaseType.Out);
         
-        // Add resources
-        var sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
-        sim.Wood += WoodAmount;
+        // Add resources to the hut that chopped it
+        if (_currentHut != null)
+        {
+            _currentHut.LocalStorage += WoodAmount;
+        }
+        else
+        {
+            var sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
+            sim.Wood += WoodAmount;
+        }
         
         // Delete after a while
         tween.TweenInterval(2.0f);

@@ -8,6 +8,8 @@ public partial class WoodcutterHut : StaticBody3D
     [Export] public float SearchRadius { get; set; } = 40.0f;
 
     private int _assignedWorkers = 0;
+    public float LocalStorage { get; set; } = 0;
+    public string ResourceType => "Wood";
     private GlobalSimulation _sim;
     private Timer _assignmentTimer;
     private Timer _spawnTimer;
@@ -65,12 +67,18 @@ public partial class WoodcutterHut : StaticBody3D
         if (roadMgr != null)
         {
             Vector3[] toTree = roadMgr.GetRoadPath(GlobalPosition, target.GlobalPosition);
-            Vector3[] toHut = roadMgr.GetRoadPath(target.GlobalPosition, GlobalPosition);
+            
+            // Return Home logic
+            ResidencePlot home = _sim.GetRandomHouse();
+            Vector3 finalDest = GlobalPosition; // Default back to hut
+            if (home != null) finalDest = home.GlobalPosition;
+
+            Vector3[] toDest = roadMgr.GetRoadPath(target.GlobalPosition, finalDest);
             
             List<Vector3> fullTrip = new List<Vector3>(toTree);
-            for (int i = 1; i < toHut.Length; i++)
+            for (int i = 1; i < toDest.Length; i++)
             {
-                fullTrip.Add(toHut[i]);
+                fullTrip.Add(toDest[i]);
             }
 
             woodcutter.WalkPath(fullTrip.ToArray());
@@ -79,7 +87,7 @@ public partial class WoodcutterHut : StaticBody3D
             if (target is Tree tree) tree.IsTargeted = true;
 
             // Trigger chopping on the tree when the worker reaches it
-            target.Chop();
+            target.Chop(this);
             
             // Release targeting after a delay or when tree falls (simplified for now)
         }

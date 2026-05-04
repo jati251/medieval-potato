@@ -57,10 +57,9 @@ public partial class HUD : CanvasLayer
 
 		if (_followTarget is ResidencePlot house)
 		{
-			if (house.IsConstructed)
-				info = $"[ POPULATION ]\nResidents: {house.ResidentCount} / 5\n\n[ STATUS ]\nCozy and Warm\nContributing to Village";
-			else
-				info = $"[ CONSTRUCTION ]\nProgress: {house.ConstructionProgress:F1}%\n\n[ STATUS ]\nIn Progress\nWaiting for Builders";
+			string status = house.IsConstructed ? "Established" : "Under Construction";
+			float hap = house.Happiness * 100f;
+			info = $"[ RESIDENCE ]\nStatus: {status}\nResidents: {house.ResidentCount}\n\n[ WELLBEING ]\nHappiness: {hap:F0}%\nNeeds: {house.NeedsStatus}";
 		}
 		else if (_followTarget is TownCenter)
 		{
@@ -109,7 +108,21 @@ public partial class HUD : CanvasLayer
 		}
 		else
 		{
-			info = "A fine addition to the village.\nStatus: Standing";
+			// Check for LocalStorage via reflection for generic production buildings
+			var storageProp = _followTarget.GetType().GetProperty("LocalStorage");
+			if (storageProp != null)
+			{
+				float amount = (float)storageProp.GetValue(_followTarget);
+				string resType = "Resources";
+				var typeProp = _followTarget.GetType().GetProperty("ResourceType");
+				if (typeProp != null) resType = (string)typeProp.GetValue(_followTarget);
+				
+				info = $"[ PRODUCTION ]\nWorkers: 2\nStatus: Active\n\n[ STORAGE ]\n{resType} inside: {amount:F1}\nWaiting for Transporters";
+			}
+			else
+			{
+				info = "A fine addition to the village.\nStatus: Standing";
+			}
 		}
 
 		_infoPopup.GetNode<Label>("Panel/VBoxContainer/InfoLabel").Text = info;
@@ -211,6 +224,7 @@ public partial class HUD : CanvasLayer
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatGeneral").Pressed += () => SelectCategory("General");
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatFood").Pressed += () => SelectCategory("Food");
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Pressed += () => SelectCategory("Tech");
+		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatZones").Pressed += () => SelectCategory("Zones");
 
 		var btns = new Dictionary<string, string> {
 			// {"GeneralGroup/BuildRoad", null}, // Natural roads now!
@@ -247,8 +261,11 @@ public partial class HUD : CanvasLayer
 		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/Bulldoze") is Button bulldozeBtn)
 			bulldozeBtn.Pressed += OnBulldozeButtonPressed;
 
-		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/ZoneRes") is Button zoneBtn)
-			zoneBtn.Pressed += OnZoneButtonPressed;
+		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/ZoneRes") is Button zoneBtn)
+			zoneBtn.Pressed += () => OnZoneButtonPressed(false);
+
+		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/EraseZone") is Button eraseZoneBtn)
+			eraseZoneBtn.Pressed += () => OnZoneButtonPressed(true);
 
 		if (GetNodeOrNull<Button>("BuildingInfoPopup/Panel/VBoxContainer/CloseButton") is Button b) b.Pressed += OnClosePopup;
 
@@ -266,11 +283,15 @@ public partial class HUD : CanvasLayer
 		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup").Visible = (cat == "General");
 		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/FoodGroup").Visible = (cat == "Food");
 		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/TechGroup").Visible = (cat == "Tech");
+		var zonesGroup = GetNodeOrNull<Control>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup");
+		if (zonesGroup != null) zonesGroup.Visible = (cat == "Zones");
 		
 		// Update category button appearance
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatGeneral").Modulate = (cat == "General") ? Colors.Yellow : Colors.White;
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatFood").Modulate = (cat == "Food") ? Colors.Yellow : Colors.White;
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Modulate = (cat == "Tech") ? Colors.Yellow : Colors.White;
+		var catZones = GetNodeOrNull<Button>("BottomBar/VBoxContainer/CategoryBar/CatZones");
+		if (catZones != null) catZones.Modulate = (cat == "Zones") ? Colors.Yellow : Colors.White;
 	}
 
 	public override void _ExitTree()
@@ -368,9 +389,29 @@ public partial class HUD : CanvasLayer
 		UpdateButtons();
 	}
 
-	private void OnZoneButtonPressed()
+	private void OnZoneButtonPressed(bool erase)
 	{
-		_isZoningMode = !_isZoningMode;
+		if (erase && _isZoningMode && _buildingManager != null)
+		{
+			// Check if we are toggling ERASE specifically
+			var field = _buildingManager.GetType().GetField("_isZoningErase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+			bool currentlyErase = field != null && (bool)field.GetValue(_buildingManager);
+			if (currentlyErase) { _isZoningMode = false; } // Toggle OFF
+			else { _isZoningMode = true; } // Toggle ON Erase
+		}
+		else if (!erase && _isZoningMode && _buildingManager != null)
+		{
+			// Check if we are toggling PAINT specifically
+			var field = _buildingManager.GetType().GetField("_isZoningErase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+			bool currentlyErase = field != null && (bool)field.GetValue(_buildingManager);
+			if (!currentlyErase) { _isZoningMode = false; } // Toggle OFF
+			else { _isZoningMode = true; } // Toggle ON Paint
+		}
+		else
+		{
+			_isZoningMode = !_isZoningMode;
+		}
+
 		if (_isZoningMode)
 		{
 			_isHouseMode = false;
@@ -380,10 +421,15 @@ public partial class HUD : CanvasLayer
 			{
 				_buildingManager.ToggleBuilding(false);
 				_buildingManager.SetBulldozeMode(false);
+				if (erase) _buildingManager.SetZoneEraseMode(true);
+				else _buildingManager.SetZoneMode(true);
 			}
 			if (_roadManager != null) _roadManager.ToggleBuilding(false);
 		}
-		if (_buildingManager != null) _buildingManager.SetZoneMode(_isZoningMode);
+		else if (_buildingManager != null)
+		{
+			_buildingManager.SetZoneMode(false);
+		}
 		UpdateButtons();
 	}
 
@@ -442,11 +488,19 @@ public partial class HUD : CanvasLayer
 			bulldozeBtn.Modulate = _isBulldozeMode ? Colors.Red : Colors.White;
 		}
 
-		var zoneBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/ZoneRes");
-		if (zoneBtn != null)
+		var zoneResBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/ZoneRes");
+		var eraseZoneBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/EraseZone");
+		
+		if (zoneResBtn != null && eraseZoneBtn != null && _buildingManager != null)
 		{
-			zoneBtn.Text = _isZoningMode ? "STOP ZONING" : "ZONE RES";
-			zoneBtn.Modulate = _isZoningMode ? Colors.Green : Colors.White;
+			var field = _buildingManager.GetType().GetField("_isZoningErase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+			bool isErase = field != null && (bool)field.GetValue(_buildingManager);
+			
+			zoneResBtn.Text = (_isZoningMode && !isErase) ? "STOP PAINT" : "ZONE PAINT";
+			zoneResBtn.Modulate = (_isZoningMode && !isErase) ? Colors.Yellow : Colors.White;
+			
+			eraseZoneBtn.Text = (_isZoningMode && isErase) ? "STOP ERASE" : "ZONE ERASER";
+			eraseZoneBtn.Modulate = (_isZoningMode && isErase) ? Colors.Red : Colors.White;
 		}
 
 		// Hide manual house build to encourage zoning
