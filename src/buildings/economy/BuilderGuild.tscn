@@ -1,7 +1,7 @@
 [gd_scene load_steps=10 format=3]
 
-[ext_resource type="Script" path="res://src/buildings/BuilderGuild.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://src/agents/BuilderAgent.tscn" id="2_builder"]
+[ext_resource type="Script" path="res://src/buildings/economy/BuilderGuild.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/workers/BuilderAgent.tscn" id="2_builder"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Guild"]
 albedo_color = Color(0.35, 0.25, 0.15, 1)

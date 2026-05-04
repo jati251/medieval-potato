@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://src/buildings/FishingHut.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://src/agents/FishermanBoat.tscn" id="2_boat"]
+[ext_resource type="Script" path="res://src/buildings/production/FishingHut.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/workers/FishermanBoat.tscn" id="2_boat"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_DarkWood"]
 albedo_color = Color(0.3, 0.2, 0.1, 1)

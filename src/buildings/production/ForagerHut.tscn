@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://src/buildings/ForagerHut.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://src/agents/VisualPop.tscn" id="2_forager"]
+[ext_resource type="Script" path="res://src/buildings/production/ForagerHut.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/core/VisualPop.tscn" id="2_forager"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Wood"]
 albedo_color = Color(0.4, 0.3, 0.2, 1)

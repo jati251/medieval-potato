@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://src/agents/BuilderAgent.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://src/agents/Potato3D.tscn" id="2_potato"]
+[ext_resource type="Script" path="res://src/agents/workers/BuilderAgent.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/core/Potato3D.tscn" id="2_potato"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Builder"]
 albedo_color = Color(1, 0.7, 0.1, 1)

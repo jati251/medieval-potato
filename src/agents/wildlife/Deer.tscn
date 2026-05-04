@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://src/agents/Animal.cs" id="1_script"]
+[ext_resource type="Script" path="res://src/agents/wildlife/Animal.cs" id="1_script"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Deer"]
 albedo_color = Color(0.6, 0.4, 0.2, 1)

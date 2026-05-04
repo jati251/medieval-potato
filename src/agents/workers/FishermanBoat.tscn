@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://src/agents/FishermanBoat.cs" id="1_script"]
-[ext_resource type="PackedScene" path="res://src/agents/Potato3D.tscn" id="2_potato"]
+[ext_resource type="Script" path="res://src/agents/workers/FishermanBoat.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/core/Potato3D.tscn" id="2_potato"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Boat"]
 albedo_color = Color(0.4, 0.3, 0.2, 1)
