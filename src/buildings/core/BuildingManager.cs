@@ -84,21 +84,33 @@ public partial class BuildingManager : Node3D
 
 	private void InitialCensus()
 	{
-		// Look through the scene for any nodes that might be pre-placed buildings
-		foreach (Node child in GetTree().CurrentScene.GetChildren())
+		// Recursively look through the scene for any nodes that might be pre-placed buildings
+		ProcessInitialCensusRecursively(GetTree().CurrentScene);
+	}
+
+	private void ProcessInitialCensusRecursively(Node node)
+	{
+		if (node == null) return;
+
+		string name = node.Name.ToString();
+		if (name.Contains("House") || 
+		    name.Contains("Shop") || 
+		    name.Contains("Guild") ||
+		    name.Contains("Stable") ||
+		    name.Contains("TownCenter") ||
+		    name.Contains("Forager") ||
+		    name.Contains("Fishing") ||
+		    name.Contains("Woodcutter") ||
+		    name.Contains("Hunter") ||
+		    name.Contains("Well"))
 		{
-			if (child.Name.ToString().Contains("House") || 
-			    child.Name.ToString().Contains("Shop") || 
-			    child.Name.ToString().Contains("Guild") ||
-			    child.Name.ToString().Contains("Stable") ||
-			    child.Name.ToString().Contains("TownCenter") ||
-			    child.Name.ToString().Contains("Forager") ||
-			    child.Name.ToString().Contains("Fishing") ||
-			    child.Name.ToString().Contains("Woodcutter"))
-			{
-				SetCollisionLayerRecursively(child, 8);
-				child.AddToGroup("Buildings");
-			}
+			SetCollisionLayerRecursively(node, 8);
+			node.AddToGroup("Buildings");
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			ProcessInitialCensusRecursively(child);
 		}
 	}
 
@@ -214,7 +226,32 @@ public partial class BuildingManager : Node3D
 				_previewHouse.GlobalPosition = new Vector3(res.Position.X, groundY, res.Position.Z);
 				
 				_previewHouse.GlobalRotation = Vector3.Zero; // Reset to avoid tilt
-				_previewHouse.Visible = res.Normal.Dot(Vector3.Up) > 0.9f;
+				
+				bool isSurfaceValid = res.Normal.Dot(Vector3.Up) > 0.9f;
+				bool isMapBorderValid = Mathf.Abs(res.Position.X) <= 248 && Mathf.Abs(res.Position.Z) <= 248;
+				bool isWaterValid = !IsPositionOnWater(res.Position);
+				
+				// Special check for Fishing Hut (must be near water)
+				bool isRequirementMet = true;
+				if (_currentScene == FishingHutScene)
+				{
+					isRequirementMet = IsNearWater(res.Position);
+				}
+
+				float radius = GetBuildingRadius(_currentScene);
+				bool isSpotFree = !IsSpotOccupied(res.Position, radius);
+				
+				bool canPlace = isSurfaceValid && isMapBorderValid && isWaterValid && isRequirementMet && isSpotFree;
+				
+				_previewHouse.Visible = true;
+				if (canPlace)
+				{
+					RemoveHighlightRecursively(_previewHouse);
+				}
+				else
+				{
+					ApplyHoverHighlight(_previewHouse);
+				}
 			}
 		}
 
@@ -483,6 +520,14 @@ public partial class BuildingManager : Node3D
 		// Deep Water Check
 		if (IsPositionOnWater(position)) return;
 
+		// Occupied Check
+		float radius = GetBuildingRadius(_currentScene);
+		if (IsSpotOccupied(position, radius))
+		{
+			GD.Print("Cannot place building here - spot is occupied!");
+			return;
+		}
+
 		// Fishing Hut Requirement: Must be near water
 		if (_currentScene == FishingHutScene)
 		{
@@ -623,10 +668,25 @@ public partial class BuildingManager : Node3D
 		query.Shape = shape;
 		query.Transform = new Transform3D(Basis.Identity, position + Vector3.Up * 1.0f);
 		
-		// Mask 8: Buildings, Mask 2: Water
-		query.CollisionMask = 8 | 2; 
+		// Mask 8: Buildings
+		query.CollisionMask = 8; 
 		
 		var results = spaceState.IntersectShape(query);
 		return results.Count > 0;
+	}
+
+	private float GetBuildingRadius(PackedScene scene)
+	{
+		if (scene == TownCenterScene) return 3.0f;
+		if (scene == HorseStableScene) return 2.5f;
+		if (scene == MeatShopScene) return 2.0f;
+		if (scene == BuilderGuildScene) return 2.5f;
+		if (scene == WoodcutterHutScene) return 2.0f;
+		if (scene == ForagerHutScene) return 2.0f;
+		if (scene == FishingHutScene) return 2.0f;
+		if (scene == HunterHutScene) return 2.0f;
+		if (scene == WellScene) return 1.0f;
+		
+		return 1.5f; // Default for House and others
 	}
 }
