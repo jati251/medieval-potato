@@ -9,6 +9,19 @@ public partial class Animal : Node3D
     private Vector3 _startPosition;
     private Vector3 _targetPosition;
     private float _waitTimer = 0.0f;
+    public bool IsTargeted { get; set; } = false;
+
+    public void Hunt()
+    {
+        // Add food to sim
+        var sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
+        sim.Food += 15.0f;
+        
+        // Death animation: shrink and disappear
+        Tween tween = CreateTween();
+        tween.TweenProperty(this, "scale", Vector3.Zero, 0.5f);
+        tween.TweenCallback(Callable.From(QueueFree));
+    }
 
     public override void _Ready()
     {

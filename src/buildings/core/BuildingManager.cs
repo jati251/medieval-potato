@@ -11,6 +11,7 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene ForagerHutScene { get; set; }
 	[Export] public PackedScene FishingHutScene { get; set; }
 	[Export] public PackedScene WoodcutterHutScene { get; set; }
+	[Export] public PackedScene HunterHutScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
@@ -71,6 +72,7 @@ public partial class BuildingManager : Node3D
 			case "ForagerHut": _currentScene = ForagerHutScene; break;
 			case "FishingHut": _currentScene = FishingHutScene; break;
 			case "WoodcutterHut": _currentScene = WoodcutterHutScene; break;
+			case "HunterHut": _currentScene = HunterHutScene; break;
 		}
 		
 		if (_currentScene == null) 

@@ -34,10 +34,9 @@ public partial class WoodcutterHut : StaticBody3D
 
     private void CheckWorkerAssignment()
     {
-        if (_assignedWorkers < 2)
+        if (_assignedWorkers < 1)
         {
-            int needed = 2 - _assignedWorkers;
-            int assigned = _sim.RequestWorkers(needed);
+            int assigned = _sim.RequestWorkers(1 - _assignedWorkers);
             _assignedWorkers += assigned;
             
             if (_assignedWorkers > 0 && _spawnTimer.IsStopped())
@@ -76,10 +75,13 @@ public partial class WoodcutterHut : StaticBody3D
 
             woodcutter.WalkPath(fullTrip.ToArray());
             
+            // Mark target as targeted so other huts don't go there
+            if (target is Tree tree) tree.IsTargeted = true;
+
             // Trigger chopping on the tree when the worker reaches it
-            // For now, we'll just chop it immediately for the visual effect
-            // In a more complex sim, we'd wait for the worker to arrive.
             target.Chop();
+            
+            // Release targeting after a delay or when tree falls (simplified for now)
         }
     }
 
@@ -92,7 +94,7 @@ public partial class WoodcutterHut : StaticBody3D
         // Let's search the whole scene or look for a group
         foreach (Node node in GetTree().CurrentScene.GetChildren())
         {
-            if (node is Tree tree)
+            if (node is Tree tree && !tree.IsTargeted)
             {
                 float dist = GlobalPosition.DistanceTo(tree.GlobalPosition);
                 if (dist < minDist)
@@ -104,7 +106,7 @@ public partial class WoodcutterHut : StaticBody3D
             // Also check children of children (for forest groups)
             foreach (Node subChild in node.GetChildren())
             {
-                if (subChild is Tree subTree)
+                if (subChild is Tree subTree && !subTree.IsTargeted)
                 {
                     float dist = GlobalPosition.DistanceTo(subTree.GlobalPosition);
                     if (dist < minDist)

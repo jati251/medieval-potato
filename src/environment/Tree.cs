@@ -9,6 +9,7 @@ public partial class Tree : Node3D
     private int _chopsRequired = 5;
     private int _currentChops = 0;
     private bool _isFallen = false;
+    public bool IsTargeted { get; set; } = false;
 
     public void Chop()
     {

@@ -178,6 +178,12 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "Woodcutter"
 
+[node name="BuildHunter" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/FoodGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Hunter"
+
 [node name="TechGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
 visible = false
 layout_mode = 2

@@ -11,6 +11,7 @@ public partial class GlobalSimulation : Node
 	[Export] public int UnemployedPopulation { get; set; } = 0;
 	[Export] public float Food { get; set; } = 100.0f;
 	[Export] public float Wood { get; set; } = 100.0f;
+	[Export] public float StorageCapacity { get; set; } = 500.0f;
 	
 	// --- Simulation Settings ---
 	[Export] public float TickRate { get; set; } = 2.0f; 
@@ -145,7 +146,6 @@ public partial class GlobalSimulation : Node
 		EmitSignal(SignalName.SimulationTicked);
 		GD.Print($"Game Loaded from {path}");
 	}
-
 	private string GetBuildingType(Node node)
 	{
 		if (node is ResidencePlot) return "House";
@@ -154,6 +154,10 @@ public partial class GlobalSimulation : Node
 		if (name.Contains("MeatShop")) return "MeatShop";
 		if (name.Contains("Stable")) return "HorseStable";
 		if (name.Contains("BuilderGuild")) return "Guild";
+		if (name.Contains("Forager")) return "ForagerHut";
+		if (name.Contains("Fishing")) return "FishingHut";
+		if (name.Contains("Woodcutter")) return "WoodcutterHut";
+		if (name.Contains("Hunter")) return "HunterHut";
 		return "";
 	}
 

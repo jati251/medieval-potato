@@ -1,6 +1,7 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
-[ext_resource type="Script" path="res://src/environment/LightToggler.cs" id="1_light_mgr"]
+[ext_resource type="Script" path="res://src/buildings/core/TownCenter.cs" id="1_script"]
+[ext_resource type="Script" path="res://src/environment/LightToggler.cs" id="2_light_mgr"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Wall"]
 albedo_color = Color(0.6, 0.55, 0.5, 1)
@@ -26,7 +27,15 @@ emission_energy_multiplier = 2.0
 material = SubResource("StandardMaterial3D_Window")
 size = Vector3(0.1, 0.8, 0.6)
 
-[node name="TownCenter" type="Node3D"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_Main"]
+size = Vector3(4, 3, 4)
+
+[node name="TownCenter" type="StaticBody3D"]
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("BoxShape3D_Main")
 
 [node name="MainBuilding" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
@@ -52,7 +61,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.05, 1.8, -0.8)
 mesh = SubResource("BoxMesh_Window")
 
 [node name="NightLight" type="Node3D" parent="."]
-script = ExtResource("1_light_mgr")
+script = ExtResource("2_light_mgr")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="NightLight"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 2.5)

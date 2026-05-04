@@ -153,7 +153,8 @@ public partial class HUD : CanvasLayer
 			{"TechGroup/BuildGuild", "Guild"},
 			{"FoodGroup/BuildForager", "ForagerHut"},
 			{"FoodGroup/BuildFishing", "FishingHut"},
-			{"FoodGroup/BuildWoodcutter", "WoodcutterHut"}
+			{"FoodGroup/BuildWoodcutter", "WoodcutterHut"},
+			{"FoodGroup/BuildHunter", "HunterHut"}
 		};
 
 		foreach (var pair in btns)
@@ -299,7 +300,8 @@ public partial class HUD : CanvasLayer
 			{"BuildGuild", "Builder Guild"},
 			{"BuildForager", "Forager Hut"},
 			{"BuildFishing", "Fishing Hut"},
-			{"BuildWoodcutter", "Woodcutter Hut"}
+			{"BuildWoodcutter", "Woodcutter Hut"},
+			{"BuildHunter", "Hunter Hut"}
 		};
 
 		foreach (var group in btnGroups)
@@ -323,6 +325,7 @@ public partial class HUD : CanvasLayer
 			if (_currentBuildingType == "ForagerHut") { btnKey = "Forager"; group = "FoodGroup"; }
 			else if (_currentBuildingType == "FishingHut") { btnKey = "Fishing"; group = "FoodGroup"; }
 			else if (_currentBuildingType == "WoodcutterHut") { btnKey = "Woodcutter"; group = "FoodGroup"; }
+			else if (_currentBuildingType == "HunterHut") { btnKey = "Hunter"; group = "FoodGroup"; }
 			else if (_currentBuildingType == "MeatShop") group = "FoodGroup";
 			else if (_currentBuildingType == "Guild" || _currentBuildingType == "HorseStable") group = "TechGroup";
 			

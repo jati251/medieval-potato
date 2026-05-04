@@ -22,6 +22,7 @@ public partial class VisualPop : Node3D
 			Vector3 start = path[i - 1];
 			Vector3 end = path[i];
 			double duration = start.DistanceTo(end) / WalkSpeed;
+			if (duration <= 0.001) continue;
 
 			tween.TweenProperty(this, "global_position", end, duration)
 				 .SetTrans(Tween.TransitionType.Linear);
