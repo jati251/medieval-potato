@@ -16,6 +16,8 @@ public partial class ResidencePlot : Node3D
 	private Node3D _visuals;
 	private Node3D _scaffolding;
 
+	public bool IsPreview { get; set; } = false;
+
 	public override void _Ready()
 	{
 		_sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
@@ -27,8 +29,11 @@ public partial class ResidencePlot : Node3D
 
 		UpdateVisuals();
 
-		// Register with simulation as a pending construction site
-		_sim.RegisterConstructionSite(this);
+		if (!IsPreview)
+		{
+			// Register with simulation as a pending construction site
+			_sim.RegisterConstructionSite(this);
+		}
 	}
 
 	public void AddProgress(float amount)
@@ -65,6 +70,35 @@ public partial class ResidencePlot : Node3D
 	{
 		if (_visuals != null) _visuals.Visible = IsConstructed;
 		if (_scaffolding != null) _scaffolding.Visible = !IsConstructed;
+	}
+
+	public override void _Process(double delta)
+	{
+		if (!IsConstructed) return;
+
+		var timeMgr = GetNodeOrNull<TimeManager>("/root/TimeManager");
+		if (timeMgr != null)
+		{
+			var light = GetNodeOrNull<OmniLight3D>("Visuals/NightLight");
+			if (light != null)
+			{
+				// Lights on from 18:00 to 06:00
+				bool isNight = timeMgr.TimeOfDay >= 18.5f || timeMgr.TimeOfDay <= 5.5f;
+				light.Visible = isNight;
+				
+				// Toggle windows too
+				var w1 = GetNodeOrNull<MeshInstance3D>("Visuals/Window1");
+				var w2 = GetNodeOrNull<MeshInstance3D>("Visuals/Window2");
+				if (w1 != null) w1.Visible = isNight;
+				if (w2 != null) w2.Visible = isNight;
+			}
+		}
+
+		var label = GetNodeOrNull<Label3D>("Visuals/StatusLabel");
+		if (label != null)
+		{
+			label.Text = $"Pops: {ResidentCount}";
+		}
 	}
 
 	private void OnSpawnTimerTimeout()

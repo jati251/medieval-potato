@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/agents/FishermanBoat.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/Potato3D.tscn" id="2_potato"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Boat"]
+albedo_color = Color(0.4, 0.3, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+material = SubResource("StandardMaterial3D_Boat")
+
+[node name="FishermanBoat" type="Node3D"]
+script = ExtResource("1_script")
+Speed = 5.0
+
+[node name="Hull" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.2, 0, 0, 0, 0.4, 0, 0, 0, 2.2, 0, 0.2, 0)
+mesh = SubResource("BoxMesh_1")
+
+[node name="Potato3D" parent="." instance=ExtResource("2_potato")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+
+[node name="OarL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 1.8, 0.7, 0.3, 0)
+mesh = SubResource("BoxMesh_1")
+
+[node name="OarR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 1.8, -0.7, 0.3, 0)
+mesh = SubResource("BoxMesh_1")

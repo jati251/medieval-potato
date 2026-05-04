@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 [autoload]
 
 GlobalSimulation="*res://src/core/GlobalSimulation.cs"
+TimeManager="*res://src/core/TimeManager.cs"
 
 [dotnet]
 

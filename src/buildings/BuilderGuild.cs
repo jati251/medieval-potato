@@ -7,10 +7,14 @@ public partial class BuilderGuild : Node3D
 	private GlobalSimulation _sim;
 	private Timer _checkTimer;
 
+	public bool IsPreview { get; set; } = false;
+
 	public override void _Ready()
 	{
 		_sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
 		
+		if (IsPreview) return;
+
 		// Wait a tiny bit for the building to be placed before spawning
 		GetTree().CreateTimer(0.5f).Timeout += SpawnInitialBuilders;
 	}

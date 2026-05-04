@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://src/core/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/buildings/ResidencePlot.tscn" id="2_house"]
@@ -24,6 +24,9 @@
 [ext_resource type="PackedScene" path="res://src/buildings/BerryBush.tscn" id="19_berry_bush"]
 [ext_resource type="PackedScene" path="res://src/agents/Deer.tscn" id="20_deer"]
 [ext_resource type="PackedScene" path="res://src/agents/Boar.tscn" id="21_boar"]
+[ext_resource type="PackedScene" path="res://src/buildings/FishingHut.tscn" id="22_fishing_hut"]
+[ext_resource type="PackedScene" path="res://src/buildings/FishArea.tscn" id="23_fish_area"]
+[ext_resource type="PackedScene" path="res://src/environment/Grass.tscn" id="24_grass"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.2, 0.5, 0.2, 1)
@@ -81,6 +84,7 @@ MeatShopScene = ExtResource("13_meat")
 HorseStableScene = ExtResource("14_stable")
 BuilderGuildScene = ExtResource("15_guild")
 ForagerHutScene = ExtResource("18_forager_hut")
+FishingHutScene = ExtResource("22_fishing_hut")
 GroundPath = NodePath("../Ground")
 
 [node name="AmbienceManager" type="Node" parent="."]
@@ -101,15 +105,18 @@ mesh = SubResource("PlaneMesh_1")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_ground")
 
-[node name="River" parent="." instance=ExtResource("16_river")]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 10, 0)
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 10, 0)
 shadow_enabled = true
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 15, 15)
 script = ExtResource("3_cam")
+
+[node name="River" parent="." instance=ExtResource("16_river")]
 
 [node name="House1" parent="." instance=ExtResource("2_house")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -5)
@@ -154,13 +161,51 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 12)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 18)
 
 [node name="Deer1" parent="." instance=ExtResource("20_deer")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, 15)
-
-[node name="Deer2" parent="." instance=ExtResource("20_deer")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, 18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 15)
 
 [node name="Boar1" parent="." instance=ExtResource("21_boar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, -20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, -20)
 
 [node name="Boar2" parent="." instance=ExtResource("21_boar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, -25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, -10)
+
+[node name="Forest1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0, -30)
+
+[node name="T1" parent="Forest1" instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+[node name="T2" parent="Forest1" instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 2)
+[node name="T3" parent="Forest1" instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 4)
+[node name="T4" parent="Forest1" instance=ExtResource("7_tree")]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 4, 0, -3)
+
+[node name="Forest2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, 40)
+
+[node name="T1" parent="Forest2" instance=ExtResource("7_tree")]
+[node name="T2" parent="Forest2" instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
+[node name="T3" parent="Forest2" instance=ExtResource("7_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 6)
+
+[node name="GrassField" type="Node3D" parent="."]
+
+[node name="G1" parent="GrassField" instance=ExtResource("24_grass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 2)
+[node name="G2" parent="GrassField" instance=ExtResource("24_grass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -3)
+[node name="G3" parent="GrassField" instance=ExtResource("24_grass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 10)
+[node name="G4" parent="GrassField" instance=ExtResource("24_grass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 15)
+
+[node name="FishArea1" parent="." instance=ExtResource("23_fish_area")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 45)
+
+[node name="FishArea2" parent="." instance=ExtResource("23_fish_area")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -95)
+
+[node name="FishArea3" parent="." instance=ExtResource("23_fish_area")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 0, 240)

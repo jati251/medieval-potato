@@ -1,0 +1,39 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/buildings/FishingHut.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/FishermanBoat.tscn" id="2_boat"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_DarkWood"]
+albedo_color = Color(0.3, 0.2, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Wood"]
+material = SubResource("StandardMaterial3D_DarkWood")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Roof"]
+albedo_color = Color(0.2, 0.2, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Roof"]
+material = SubResource("StandardMaterial3D_Roof")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(2.5, 1.5, 1.5)
+
+[node name="root" type="StaticBody3D"]
+script = ExtResource("1_script")
+BoatScene = ExtResource("2_boat")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.2, 0, 0, 0, 1, 0, 0, 0, 1.2, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_Wood")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.4, 0, 0, 0, 0.3, 0, 0, 0, 1.4, 0, 1.1, 0)
+mesh = SubResource("BoxMesh_Roof")
+
+[node name="Dock" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.5, 0, 0, 0, 0.1, 0, 0, 0, 0.8, 0, 0.1, 1.0)
+mesh = SubResource("BoxMesh_Wood")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0.4)
+shape = SubResource("BoxShape3D_1")

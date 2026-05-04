@@ -81,68 +81,105 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -80.0
+offset_top = -120.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="MarginContainer" type="MarginContainer" parent="BottomBar"]
+[node name="VBoxContainer" type="VBoxContainer" parent="BottomBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="CategoryBar" type="HBoxContainer" parent="BottomBar/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="CatGeneral" type="Button" parent="BottomBar/VBoxContainer/CategoryBar"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "General"
+
+[node name="CatFood" type="Button" parent="BottomBar/VBoxContainer/CategoryBar"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "Food"
+
+[node name="CatTech" type="Button" parent="BottomBar/VBoxContainer/CategoryBar"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "Tech"
+
+[node name="MarginContainer" type="MarginContainer" parent="BottomBar/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_right = 20
 
-[node name="HBoxContainer" type="HBoxContainer" parent="BottomBar/MarginContainer"]
+[node name="GeneralGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 20
+alignment = 1
 
-[node name="BuildRoad" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+[node name="BuildRoad" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Build Road"
 
-[node name="BuildHouse" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+[node name="BuildHouse" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Build House"
 
-[node name="BuildTownCenter" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+[node name="BuildTownCenter" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Town Center"
 
-[node name="BuildMeatShop" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+[node name="FoodGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BuildForager" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/FoodGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Forager"
+
+[node name="BuildFishing" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/FoodGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Fishing"
+
+[node name="BuildMeatShop" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/FoodGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Meat Shop"
 
-[node name="BuildStable" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 50)
+[node name="TechGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
+visible = false
 layout_mode = 2
-size_flags_vertical = 4
-text = "Stable"
+theme_override_constants/separation = 20
+alignment = 1
 
-[node name="BuildGuild" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+[node name="BuildGuild" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/TechGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Builder Guild"
 
-[node name="BuildForager" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
+[node name="BuildStable" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/TechGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
-text = "Forager Hut"
-
-[node name="MarketInfo" type="Button" parent="BottomBar/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 50)
-layout_mode = 2
-size_flags_vertical = 4
-text = "Market Info"
+text = "Stable"

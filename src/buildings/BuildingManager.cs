@@ -9,6 +9,7 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene HorseStableScene { get; set; }
 	[Export] public PackedScene BuilderGuildScene { get; set; }
 	[Export] public PackedScene ForagerHutScene { get; set; }
+	[Export] public PackedScene FishingHutScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
@@ -44,6 +45,7 @@ public partial class BuildingManager : Node3D
 
 	public void SetBuildingType(string type)
 	{
+		GD.Print($"Setting building type: {type}");
 		switch (type)
 		{
 			case "House": _currentScene = HouseScene; break;
@@ -52,8 +54,11 @@ public partial class BuildingManager : Node3D
 			case "HorseStable": _currentScene = HorseStableScene; break;
 			case "Guild": _currentScene = BuilderGuildScene; break;
 			case "ForagerHut": _currentScene = ForagerHutScene; break;
+			case "FishingHut": _currentScene = FishingHutScene; break;
 		}
 		
+		if (_currentScene == null) GD.PrintErr($"CRITICAL: Scene for {type} is null!");
+
 		// Reset preview
 		if (_previewHouse != null) { _previewHouse.QueueFree(); _previewHouse = null; }
 		if (_isBuilding) ToggleBuilding(true);
@@ -68,6 +73,11 @@ public partial class BuildingManager : Node3D
 			if (_previewHouse == null)
 			{
 				_previewHouse = _currentScene.Instantiate<Node3D>();
+				
+				// Use reflection or dynamic to set IsPreview if it exists
+				var previewProp = _previewHouse.GetType().GetProperty("IsPreview");
+				if (previewProp != null) previewProp.SetValue(_previewHouse, true);
+
 				AddChild(_previewHouse);
 				// CRITICAL: Disable all collisions on preview to prevent flicker!
 				DisableCollisionRecursively(_previewHouse);
@@ -162,6 +172,11 @@ public partial class BuildingManager : Node3D
 				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
 				if (hud != null) hud.ShowBuildingInfo(hut, "Forager Hut", "Gathering Berries\nWorkers: 2\nStatus: Active");
 			}
+			else if (parent is FishingHut fHut)
+			{
+				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+				if (hud != null) hud.ShowBuildingInfo(fHut, "Fishing Hut", "Gathering Fish\nWorkers: 2\nStatus: Active");
+			}
 			else
 			{
 				// Generic building info
@@ -216,6 +231,16 @@ public partial class BuildingManager : Node3D
 
 		// Deep Water Check
 		if (IsPositionOnWater(position)) return;
+
+		// Fishing Hut Requirement: Must be near water
+		if (_currentScene == FishingHutScene)
+		{
+			if (!IsNearWater(position))
+			{
+				GD.Print("Fishing Hut must be placed on the riverbank!");
+				return;
+			}
+		}
 
 		var building = _currentScene.Instantiate<Node3D>();
 		GetTree().CurrentScene.AddChild(building);
@@ -289,6 +314,28 @@ public partial class BuildingManager : Node3D
 		return result.Count > 0;
 	}
 
+	private bool IsNearWater(Vector3 position)
+	{
+		var spaceState = GetWorld3D().DirectSpaceState;
+		// Check several points in a tight circle (max 4 units)
+		for (float dist = 1.0f; dist <= 4.0f; dist += 1.0f)
+		{
+			for (int i = 0; i < 8; i++) // Check more directions
+			{
+				float angle = i * (Mathf.Pi / 4);
+				Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * dist;
+				Vector3 testPos = position + offset;
+				
+				Vector3 from = testPos + Vector3.Up * 10.0f;
+				Vector3 to = testPos + Vector3.Down * 20.0f;
+				var query = PhysicsRayQueryParameters3D.Create(from, to, 2); 
+				var result = spaceState.IntersectRay(query);
+				if (result.Count > 0) return true;
+			}
+		}
+		return false;
+	}
+
 	public void ForcePlaceBuilding(string type, Vector3 position, float rotation)
 	{
 		PackedScene scene = null;
@@ -300,6 +347,7 @@ public partial class BuildingManager : Node3D
 			case "HorseStable": scene = HorseStableScene; break;
 			case "Guild": scene = BuilderGuildScene; break;
 			case "ForagerHut": scene = ForagerHutScene; break;
+			case "FishingHut": scene = FishingHutScene; break;
 		}
 
 		if (scene == null) return;

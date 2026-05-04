@@ -1,4 +1,6 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://src/environment/LightToggler.cs" id="1_light_mgr"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Wall"]
 albedo_color = Color(0.6, 0.55, 0.5, 1)
@@ -14,6 +16,16 @@ albedo_color = Color(0.1, 0.1, 0.1, 1)
 material = SubResource("StandardMaterial3D_Roof")
 size = Vector3(4.5, 2, 4.5)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Window"]
+albedo_color = Color(1, 0.9, 0.4, 1)
+emission_enabled = true
+emission = Color(1, 0.8, 0.2, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_Window"]
+material = SubResource("StandardMaterial3D_Window")
+size = Vector3(0.1, 0.8, 0.6)
+
 [node name="TownCenter" type="Node3D"]
 
 [node name="MainBuilding" type="MeshInstance3D" parent="."]
@@ -28,3 +40,22 @@ mesh = SubResource("PrismMesh_Roof")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 3, 1.5)
 mesh = SubResource("BoxMesh_Main")
 scale = Vector3(0.4, 2, 0.4)
+
+[node name="Windows" type="Node3D" parent="."]
+
+[node name="W1" type="MeshInstance3D" parent="Windows"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.05, 1.8, 0.8)
+mesh = SubResource("BoxMesh_Window")
+
+[node name="W2" type="MeshInstance3D" parent="Windows"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.05, 1.8, -0.8)
+mesh = SubResource("BoxMesh_Window")
+
+[node name="NightLight" type="Node3D" parent="."]
+script = ExtResource("1_light_mgr")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="NightLight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 2.5)
+light_color = Color(1, 0.9, 0.6, 1)
+light_energy = 3.0
+omni_range = 8.0

@@ -1,4 +1,4 @@
-[gd_scene format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://src/buildings/ResidencePlot.cs" id="1_script"]
 [ext_resource type="PackedScene" path="res://src/agents/VisualPop.tscn" id="2_pop"]
@@ -27,6 +27,16 @@ albedo_color = Color(0.3, 0.3, 0.3, 1)
 material = SubResource("StandardMaterial3D_Stone")
 size = Vector3(0.4, 1.5, 0.4)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Window"]
+albedo_color = Color(1, 0.9, 0.4, 1)
+emission_enabled = true
+emission = Color(1, 0.8, 0.2, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_Window"]
+material = SubResource("StandardMaterial3D_Window")
+size = Vector3(0.1, 0.6, 0.4)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Scaffold"]
 albedo_color = Color(0.3, 0.2, 0.1, 1)
 
@@ -34,51 +44,66 @@ albedo_color = Color(0.3, 0.2, 0.1, 1)
 material = SubResource("StandardMaterial3D_Scaffold")
 size = Vector3(0.1, 2.2, 0.1)
 
-[node name="root" type="Node3D" unique_id=2033733198]
+[node name="root" type="Node3D"]
 script = ExtResource("1_script")
 PopScene = ExtResource("2_pop")
 
-[node name="Visuals" type="Node3D" parent="." unique_id=904876318]
+[node name="Visuals" type="Node3D" parent="."]
 visible = false
 
-[node name="HouseMesh" type="MeshInstance3D" parent="Visuals" unique_id=438025055]
+[node name="HouseMesh" type="MeshInstance3D" parent="Visuals"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 mesh = SubResource("BoxMesh_1")
 
-[node name="StaticBody3D" type="StaticBody3D" parent="Visuals/HouseMesh" unique_id=1234242502]
+[node name="StaticBody3D" type="StaticBody3D" parent="Visuals/HouseMesh"]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Visuals/HouseMesh/StaticBody3D" unique_id=393792937]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Visuals/HouseMesh/StaticBody3D"]
 shape = SubResource("BoxShape3D_1")
 
-[node name="Roof" type="MeshInstance3D" parent="Visuals" unique_id=659118539]
+[node name="Roof" type="MeshInstance3D" parent="Visuals"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 mesh = SubResource("PrismMesh_Roof")
 
-[node name="Chimney" type="MeshInstance3D" parent="Visuals" unique_id=774598418]
+[node name="Chimney" type="MeshInstance3D" parent="Visuals"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 1.5, 0.5)
 mesh = SubResource("BoxMesh_Chimney")
 
-[node name="StatusLabel" type="Label3D" parent="Visuals" unique_id=1839943746]
+[node name="Window1" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 1.2, 0)
+mesh = SubResource("BoxMesh_Window")
+
+[node name="Window2" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 1.2, 0)
+mesh = SubResource("BoxMesh_Window")
+
+[node name="StatusLabel" type="Label3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
 billboard = 1
 text = "Pops: 0"
 font_size = 48
 
-[node name="Scaffolding" type="Node3D" parent="." unique_id=148888140]
+[node name="NightLight" type="OmniLight3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+light_color = Color(1, 0.8, 0.4, 1)
+light_energy = 2.0
+omni_range = 5.0
 
-[node name="Beam1" type="MeshInstance3D" parent="Scaffolding" unique_id=378486209]
+[node name="Scaffolding" type="Node3D" parent="."]
+
+[node name="Beam1" type="MeshInstance3D" parent="Scaffolding"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1.1, 1)
 mesh = SubResource("BoxMesh_Scaffold")
 
-[node name="Beam2" type="MeshInstance3D" parent="Scaffolding" unique_id=158191000]
+[node name="Beam2" type="MeshInstance3D" parent="Scaffolding"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.1, 1)
 mesh = SubResource("BoxMesh_Scaffold")
 
-[node name="Beam3" type="MeshInstance3D" parent="Scaffolding" unique_id=2140597458]
+[node name="Beam3" type="MeshInstance3D" parent="Scaffolding"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1.1, -1)
 mesh = SubResource("BoxMesh_Scaffold")
 
-[node name="Beam4" type="MeshInstance3D" parent="Scaffolding" unique_id=1192864945]
+[node name="Beam4" type="MeshInstance3D" parent="Scaffolding"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.1, -1)
 mesh = SubResource("BoxMesh_Scaffold")
 
-[node name="Timer" type="Timer" parent="." unique_id=1991388251]
+[node name="Timer" type="Timer" parent="."]

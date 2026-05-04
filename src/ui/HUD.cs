@@ -111,6 +111,7 @@ public partial class HUD : CanvasLayer
 		}
 
 		UpdateDisplay();
+		SelectCategory("General");
 	}
 
 	private void DeferredLoad(string fileName)
@@ -137,22 +138,28 @@ public partial class HUD : CanvasLayer
 
 	private void SetupButtonHandlers()
 	{
+		// Category Buttons
+		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatGeneral").Pressed += () => SelectCategory("General");
+		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatFood").Pressed += () => SelectCategory("Food");
+		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Pressed += () => SelectCategory("Tech");
+
 		var btns = new Dictionary<string, string> {
-			{"BuildRoad", null},
-			{"BuildHouse", "House"},
-			{"BuildTownCenter", "TownCenter"},
-			{"BuildMeatShop", "MeatShop"},
-			{"BuildStable", "HorseStable"},
-			{"BuildGuild", "Guild"},
-			{"BuildForager", "ForagerHut"}
+			{"GeneralGroup/BuildRoad", null},
+			{"GeneralGroup/BuildHouse", "House"},
+			{"GeneralGroup/BuildTownCenter", "TownCenter"},
+			{"FoodGroup/BuildMeatShop", "MeatShop"},
+			{"TechGroup/BuildStable", "HorseStable"},
+			{"TechGroup/BuildGuild", "Guild"},
+			{"FoodGroup/BuildForager", "ForagerHut"},
+			{"FoodGroup/BuildFishing", "FishingHut"}
 		};
 
 		foreach (var pair in btns)
 		{
-			var btn = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/" + pair.Key);
+			var btn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/" + pair.Key);
 			if (btn == null) continue;
 			
-			if (pair.Key == "BuildRoad") btn.Pressed += OnRoadButtonPressed;
+			if (pair.Key.EndsWith("BuildRoad")) btn.Pressed += OnRoadButtonPressed;
 			else btn.Pressed += () => OnBuildingSelected(pair.Value);
 		}
 
@@ -165,6 +172,18 @@ public partial class HUD : CanvasLayer
 				speedBtn.Pressed += () => SetGameSpeed(s);
 			}
 		}
+	}
+
+	private void SelectCategory(string cat)
+	{
+		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup").Visible = (cat == "General");
+		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/FoodGroup").Visible = (cat == "Food");
+		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/TechGroup").Visible = (cat == "Tech");
+		
+		// Update category button appearance
+		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatGeneral").Modulate = (cat == "General") ? Colors.Yellow : Colors.White;
+		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatFood").Modulate = (cat == "Food") ? Colors.Yellow : Colors.White;
+		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Modulate = (cat == "Tech") ? Colors.Yellow : Colors.White;
 	}
 
 	public override void _ExitTree()
@@ -226,6 +245,7 @@ public partial class HUD : CanvasLayer
 
 	private void UpdateButtons()
 	{
+		var btnGroups = new string[] {"GeneralGroup", "FoodGroup", "TechGroup"};
 		var btnNames = new Dictionary<string, string> {
 			{"BuildRoad", "Build Road"},
 			{"BuildHouse", "Build House"},
@@ -233,22 +253,32 @@ public partial class HUD : CanvasLayer
 			{"BuildMeatShop", "Meat Shop"},
 			{"BuildStable", "Stable"},
 			{"BuildGuild", "Builder Guild"},
-			{"BuildForager", "Forager Hut"}
+			{"BuildForager", "Forager Hut"},
+			{"BuildFishing", "Fishing Hut"}
 		};
 
-		foreach (var pair in btnNames)
+		foreach (var group in btnGroups)
 		{
-			var btn = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/" + pair.Key);
-			if (btn != null) btn.Text = pair.Value;
+			foreach (var pair in btnNames)
+			{
+				var btn = GetNodeOrNull<Button>($"BottomBar/VBoxContainer/MarginContainer/{group}/{pair.Key}");
+				if (btn != null) btn.Text = pair.Value;
+			}
 		}
 
-		var roadBtn = GetNodeOrNull<Button>("BottomBar/MarginContainer/HBoxContainer/BuildRoad");
+		var roadBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/BuildRoad");
 		if (roadBtn != null) roadBtn.Text = _isRoadMode ? "STOP ROAD" : "Build Road";
 		
 		if (_isHouseMode)
 		{
-			string btnKey = _currentBuildingType == "ForagerHut" ? "Forager" : _currentBuildingType;
-			string btnPath = "BottomBar/MarginContainer/HBoxContainer/Build" + btnKey;
+			string group = "GeneralGroup";
+			string btnKey = _currentBuildingType;
+			if (_currentBuildingType == "ForagerHut") { btnKey = "Forager"; group = "FoodGroup"; }
+			if (_currentBuildingType == "FishingHut") { btnKey = "Fishing"; group = "FoodGroup"; }
+			if (_currentBuildingType == "MeatShop") group = "FoodGroup";
+			if (_currentBuildingType == "Guild" || _currentBuildingType == "HorseStable") group = "TechGroup";
+			
+			string btnPath = $"BottomBar/VBoxContainer/MarginContainer/{group}/Build{btnKey}";
 			var btn = GetNodeOrNull<Button>(btnPath);
 			if (btn != null) btn.Text = "CANCEL";
 		}
@@ -261,6 +291,16 @@ public partial class HUD : CanvasLayer
 			Vector3 worldPos = _followTarget.GlobalPosition + Vector3.Up * 2.5f;
 			Vector2 screenPos = _camera.UnprojectPosition(worldPos);
 			_infoPopup.Position = screenPos - (_infoPopup.GetNode<Control>("Panel").Size / 2.0f);
+		}
+		
+		_popLabel.Text = $"Population: {_sim.Population} ({_sim.UnemployedPopulation} Unemployed)";
+		_foodLabel.Text = $"Food: {_sim.Food:F1}";
+		_woodLabel.Text = $"Wood: {_sim.Wood:F0}";
+
+		var timeMgr = GetNodeOrNull<TimeManager>("/root/TimeManager");
+		if (timeMgr != null)
+		{
+			_popLabel.Text = timeMgr.GetFormattedTime() + "\n" + _popLabel.Text;
 		}
 	}
 

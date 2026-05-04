@@ -77,6 +77,8 @@ public partial class RoadManager : Node3D
 			float t = (float)i / segments;
 			Vector3 pos = start.Lerp(end, t);
 			
+			if (IsPositionOnWater(pos)) continue;
+
 			var segment = RoadSegmentScene.Instantiate<MeshInstance3D>();
 			_previewContainer.AddChild(segment);
 			segment.GlobalPosition = pos + Vector3.Up * 0.05f;
@@ -182,6 +184,8 @@ public partial class RoadManager : Node3D
 			float t = (float)i / segments;
 			Vector3 pos = start.Lerp(end, t);
 			
+			if (IsPositionOnWater(pos)) continue; // Skip segments on water
+
 			var segment = RoadSegmentScene.Instantiate<MeshInstance3D>();
 			AddChild(segment);
 			

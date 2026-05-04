@@ -12,10 +12,14 @@ public partial class ForagerHut : StaticBody3D
     private Timer _assignmentTimer;
     private Timer _spawnTimer;
 
+    public bool IsPreview { get; set; } = false;
+
     public override void _Ready()
     {
         _sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
         
+        if (IsPreview) return;
+
         _assignmentTimer = new Timer();
         _assignmentTimer.WaitTime = 5.0f;
         _assignmentTimer.Autostart = true;

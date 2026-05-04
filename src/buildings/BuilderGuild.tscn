@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/buildings/BuilderGuild.cs" id="1_script"]
 [ext_resource type="PackedScene" path="res://src/agents/BuilderAgent.tscn" id="2_builder"]
@@ -8,7 +8,7 @@ albedo_color = Color(0.35, 0.25, 0.15, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_Guild"]
 material = SubResource("StandardMaterial3D_Guild")
-size = Vector3(3, 2.5, 3)
+size = Vector3(3, 2, 3)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Beams"]
 albedo_color = Color(0.2, 0.1, 0.05, 1)
@@ -17,13 +17,28 @@ albedo_color = Color(0.2, 0.1, 0.05, 1)
 material = SubResource("StandardMaterial3D_Beams")
 size = Vector3(0.3, 3, 0.3)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Roof"]
+albedo_color = Color(0.2, 0.2, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Roof"]
+material = SubResource("StandardMaterial3D_Roof")
+size = Vector3(3.5, 0.5, 3.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Lumber"]
+material = SubResource("StandardMaterial3D_Beams")
+size = Vector3(1.5, 0.2, 0.2)
+
 [node name="BuilderGuild" type="Node3D"]
 script = ExtResource("1_script")
 BuilderScene = ExtResource("2_builder")
 
 [node name="Main" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 mesh = SubResource("BoxMesh_Guild")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+mesh = SubResource("BoxMesh_Roof")
 
 [node name="Beam1" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.5, 1.4)
@@ -40,3 +55,18 @@ mesh = SubResource("BoxMesh_Beam")
 [node name="Beam4" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.5, -1.4)
 mesh = SubResource("BoxMesh_Beam")
+
+[node name="LumberPile" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.1, 0)
+
+[node name="Log1" type="MeshInstance3D" parent="LumberPile"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_Lumber")
+
+[node name="Log2" type="MeshInstance3D" parent="LumberPile"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0.1)
+mesh = SubResource("BoxMesh_Lumber")
+
+[node name="Log3" type="MeshInstance3D" parent="LumberPile"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.2)
+mesh = SubResource("BoxMesh_Lumber")
