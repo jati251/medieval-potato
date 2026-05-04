@@ -27,6 +27,7 @@
 [ext_resource type="PackedScene" path="res://src/buildings/production/FishingHut.tscn" id="22_fishing_hut"]
 [ext_resource type="PackedScene" path="res://src/buildings/production/FishArea.tscn" id="23_fish_area"]
 [ext_resource type="PackedScene" path="res://src/environment/Grass.tscn" id="24_grass"]
+[ext_resource type="PackedScene" path="res://src/buildings/production/WoodcutterHut.tscn" id="25_woodcutter_hut"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(0.2, 0.5, 0.2, 1)
@@ -85,6 +86,7 @@ HorseStableScene = ExtResource("14_stable")
 BuilderGuildScene = ExtResource("15_guild")
 ForagerHutScene = ExtResource("18_forager_hut")
 FishingHutScene = ExtResource("22_fishing_hut")
+WoodcutterHutScene = ExtResource("25_woodcutter_hut")
 GroundPath = NodePath("../Ground")
 
 [node name="AmbienceManager" type="Node" parent="."]

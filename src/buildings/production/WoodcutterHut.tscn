@@ -1,0 +1,44 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/buildings/production/WoodcutterHut.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/core/VisualPop.tscn" id="2_woodcutter"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Logs"]
+albedo_color = Color(0.35, 0.2, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Logs"]
+material = SubResource("StandardMaterial3D_Logs")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Roof"]
+albedo_color = Color(0.25, 0.15, 0.1, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_Roof"]
+material = SubResource("StandardMaterial3D_Roof")
+size = Vector3(1.8, 0.8, 1.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(1.8, 1.5, 1.8)
+
+[node name="root" type="StaticBody3D"]
+script = ExtResource("1_script")
+WoodcutterScene = ExtResource("2_woodcutter")
+
+[node name="Cabin" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.5, 0, 0, 0, 1, 0, 0, 0, 1.5, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_Logs")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+mesh = SubResource("PrismMesh_Roof")
+
+[node name="LogPile" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.3, 0, 0, 0, 0.8, 1.2, 0.15, 0)
+mesh = SubResource("BoxMesh_Logs")
+
+[node name="LogPile2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.3, 0, 0, 0, 0.8, 1.2, 0.45, 0.1)
+mesh = SubResource("BoxMesh_Logs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+shape = SubResource("BoxShape3D_1")

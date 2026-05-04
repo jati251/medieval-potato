@@ -12,6 +12,7 @@ public partial class HUD : CanvasLayer
 	private BuildingManager _buildingManager;
 	private bool _isRoadMode = false;
 	private bool _isHouseMode = false;
+	private bool _isBulldozeMode = false;
 	private string _currentBuildingType = "";
 
 	private Node3D _followTarget;
@@ -151,17 +152,30 @@ public partial class HUD : CanvasLayer
 			{"TechGroup/BuildStable", "HorseStable"},
 			{"TechGroup/BuildGuild", "Guild"},
 			{"FoodGroup/BuildForager", "ForagerHut"},
-			{"FoodGroup/BuildFishing", "FishingHut"}
+			{"FoodGroup/BuildFishing", "FishingHut"},
+			{"FoodGroup/BuildWoodcutter", "WoodcutterHut"}
 		};
 
 		foreach (var pair in btns)
 		{
-			var btn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/" + pair.Key);
-			if (btn == null) continue;
+			string nodePath = pair.Key;
+			string buildingType = pair.Value;
 			
-			if (pair.Key.EndsWith("BuildRoad")) btn.Pressed += OnRoadButtonPressed;
-			else btn.Pressed += () => OnBuildingSelected(pair.Value);
+			var btn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/" + nodePath);
+			if (btn == null)
+			{
+				GD.PrintErr($"HUD: Could not find button at path: BottomBar/VBoxContainer/MarginContainer/{nodePath}");
+				continue;
+			}
+			
+			if (nodePath.EndsWith("BuildRoad")) 
+				btn.Pressed += OnRoadButtonPressed;
+			else 
+				btn.Pressed += () => OnBuildingSelected(buildingType);
 		}
+
+		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/Bulldoze") is Button bulldozeBtn)
+			bulldozeBtn.Pressed += OnBulldozeButtonPressed;
 
 		if (GetNodeOrNull<Button>("BuildingInfoPopup/Panel/VBoxContainer/CloseButton") is Button b) b.Pressed += OnClosePopup;
 
@@ -213,20 +227,30 @@ public partial class HUD : CanvasLayer
 
 	private void OnBuildingSelected(string type)
 	{
-		if (_buildingManager == null) return;
+		GD.Print($"HUD: Building selected: {type}");
+		if (_buildingManager == null) 
+		{
+			GD.PrintErr("HUD: BuildingManager is null!");
+			return;
+		}
+		
 		if (_isHouseMode && _currentBuildingType == type)
 		{
+			GD.Print($"HUD: Toggling OFF {type}");
 			_isHouseMode = false;
 			_buildingManager.ToggleBuilding(false);
 		}
 		else
 		{
+			GD.Print($"HUD: Toggling ON {type}");
 			_isHouseMode = true;
 			_currentBuildingType = type;
 			_isRoadMode = false;
+			_isBulldozeMode = false;
 			if (_roadManager != null) _roadManager.ToggleBuilding(false);
 			_buildingManager.SetBuildingType(type);
 			_buildingManager.ToggleBuilding(true);
+			_buildingManager.SetBulldozeMode(false);
 		}
 		UpdateButtons();
 	}
@@ -237,9 +261,29 @@ public partial class HUD : CanvasLayer
 		_isRoadMode = !_isRoadMode;
 		if (_isRoadMode) { 
 			_isHouseMode = false; 
-			if (_buildingManager != null) _buildingManager.ToggleBuilding(false); 
+			_isBulldozeMode = false;
+			if (_buildingManager != null) 
+			{
+				_buildingManager.ToggleBuilding(false); 
+				_buildingManager.SetBulldozeMode(false);
+			}
 		}
 		_roadManager.ToggleBuilding(_isRoadMode);
+		UpdateButtons();
+	}
+
+	private void OnBulldozeButtonPressed()
+	{
+		_isBulldozeMode = !_isBulldozeMode;
+		if (_isBulldozeMode)
+		{
+			_isHouseMode = false;
+			_isRoadMode = false;
+			if (_buildingManager != null) _buildingManager.ToggleBuilding(false);
+			if (_roadManager != null) _roadManager.ToggleBuilding(false);
+		}
+		
+		if (_buildingManager != null) _buildingManager.SetBulldozeMode(_isBulldozeMode);
 		UpdateButtons();
 	}
 
@@ -254,7 +298,8 @@ public partial class HUD : CanvasLayer
 			{"BuildStable", "Stable"},
 			{"BuildGuild", "Builder Guild"},
 			{"BuildForager", "Forager Hut"},
-			{"BuildFishing", "Fishing Hut"}
+			{"BuildFishing", "Fishing Hut"},
+			{"BuildWoodcutter", "Woodcutter Hut"}
 		};
 
 		foreach (var group in btnGroups)
@@ -273,14 +318,24 @@ public partial class HUD : CanvasLayer
 		{
 			string group = "GeneralGroup";
 			string btnKey = _currentBuildingType;
+			
+			// Map building types back to button names
 			if (_currentBuildingType == "ForagerHut") { btnKey = "Forager"; group = "FoodGroup"; }
-			if (_currentBuildingType == "FishingHut") { btnKey = "Fishing"; group = "FoodGroup"; }
-			if (_currentBuildingType == "MeatShop") group = "FoodGroup";
-			if (_currentBuildingType == "Guild" || _currentBuildingType == "HorseStable") group = "TechGroup";
+			else if (_currentBuildingType == "FishingHut") { btnKey = "Fishing"; group = "FoodGroup"; }
+			else if (_currentBuildingType == "WoodcutterHut") { btnKey = "Woodcutter"; group = "FoodGroup"; }
+			else if (_currentBuildingType == "MeatShop") group = "FoodGroup";
+			else if (_currentBuildingType == "Guild" || _currentBuildingType == "HorseStable") group = "TechGroup";
 			
 			string btnPath = $"BottomBar/VBoxContainer/MarginContainer/{group}/Build{btnKey}";
 			var btn = GetNodeOrNull<Button>(btnPath);
 			if (btn != null) btn.Text = "CANCEL";
+		}
+		
+		var bulldozeBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/Bulldoze");
+		if (bulldozeBtn != null) 
+		{
+			bulldozeBtn.Text = _isBulldozeMode ? "STOP BULLDOZE" : "BULLDOZE";
+			bulldozeBtn.Modulate = _isBulldozeMode ? Colors.Red : Colors.White;
 		}
 	}
 

@@ -10,13 +10,17 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene BuilderGuildScene { get; set; }
 	[Export] public PackedScene ForagerHutScene { get; set; }
 	[Export] public PackedScene FishingHutScene { get; set; }
+	[Export] public PackedScene WoodcutterHutScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
+	private bool _isBulldozing = false;
 	private PackedScene _currentScene;
 	private Camera3D _camera;
 	private Node3D _ground;
 	private Node3D _previewHouse;
+	private Node3D _hoveredBuilding;
+	private StandardMaterial3D _highlightMaterial;
 
 	public override void _Ready()
 	{
@@ -24,6 +28,12 @@ public partial class BuildingManager : Node3D
 		_camera = GetViewport().GetCamera3D();
 		_currentScene = HouseScene;
 		
+		_highlightMaterial = new StandardMaterial3D();
+		_highlightMaterial.AlbedoColor = new Color(1, 0, 0, 0.3f);
+		_highlightMaterial.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
+		_highlightMaterial.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
+		_highlightMaterial.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+
 		// Initial Census: Move all pre-placed buildings to Layer 4 (bit mask 8)
 		CallDeferred(nameof(InitialCensus));
 	}
@@ -36,9 +46,14 @@ public partial class BuildingManager : Node3D
 			if (child.Name.ToString().Contains("House") || 
 			    child.Name.ToString().Contains("Shop") || 
 			    child.Name.ToString().Contains("Guild") ||
-			    child.Name.ToString().Contains("Stable"))
+			    child.Name.ToString().Contains("Stable") ||
+			    child.Name.ToString().Contains("TownCenter") ||
+			    child.Name.ToString().Contains("Forager") ||
+			    child.Name.ToString().Contains("Fishing") ||
+			    child.Name.ToString().Contains("Woodcutter"))
 			{
 				SetCollisionLayerRecursively(child, 8);
+				child.AddToGroup("Buildings");
 			}
 		}
 	}
@@ -55,13 +70,38 @@ public partial class BuildingManager : Node3D
 			case "Guild": _currentScene = BuilderGuildScene; break;
 			case "ForagerHut": _currentScene = ForagerHutScene; break;
 			case "FishingHut": _currentScene = FishingHutScene; break;
+			case "WoodcutterHut": _currentScene = WoodcutterHutScene; break;
 		}
 		
-		if (_currentScene == null) GD.PrintErr($"CRITICAL: Scene for {type} is null!");
+		if (_currentScene == null) 
+		{
+			GD.PrintErr($"CRITICAL: Scene for {type} is null!");
+		}
+		else
+		{
+			GD.Print($"BuildingManager: Set current scene to {_currentScene.ResourcePath}");
+		}
 
 		// Reset preview
 		if (_previewHouse != null) { _previewHouse.QueueFree(); _previewHouse = null; }
 		if (_isBuilding) ToggleBuilding(true);
+		
+		// Exit bulldoze mode if entering building mode
+		_isBulldozing = false;
+	}
+
+	public void SetBulldozeMode(bool active)
+	{
+		_isBulldozing = active;
+		if (_isBulldozing)
+		{
+			// Exit building mode if entering bulldoze mode
+			ToggleBuilding(false);
+		}
+		else
+		{
+			ClearHoverHighlight();
+		}
 	}
 
 	public void ToggleBuilding(bool active)
@@ -72,6 +112,7 @@ public partial class BuildingManager : Node3D
 		{
 			if (_previewHouse == null)
 			{
+				GD.Print($"BuildingManager: Instantiating preview for {_currentScene.ResourcePath}");
 				_previewHouse = _currentScene.Instantiate<Node3D>();
 				
 				// Use reflection or dynamic to set IsPreview if it exists
@@ -81,6 +122,7 @@ public partial class BuildingManager : Node3D
 				AddChild(_previewHouse);
 				// CRITICAL: Disable all collisions on preview to prevent flicker!
 				DisableCollisionRecursively(_previewHouse);
+				GD.Print("BuildingManager: Preview instantiated and added to tree.");
 			}
 			_previewHouse.Visible = true;
 		}
@@ -117,6 +159,90 @@ public partial class BuildingManager : Node3D
 				_previewHouse.Visible = res.Normal.Dot(Vector3.Up) > 0.9f;
 			}
 		}
+
+		if (_isBulldozing)
+		{
+			UpdateBulldozeHover();
+		}
+	}
+
+	private void UpdateBulldozeHover()
+	{
+		Node3D building = GetBuildingUnderMouse();
+		if (building != _hoveredBuilding)
+		{
+			ClearHoverHighlight();
+			_hoveredBuilding = building;
+			if (_hoveredBuilding != null)
+			{
+				ApplyHoverHighlight(_hoveredBuilding);
+			}
+		}
+	}
+
+	private void ClearHoverHighlight()
+	{
+		if (_hoveredBuilding != null && IsInstanceValid(_hoveredBuilding))
+		{
+			RemoveHighlightRecursively(_hoveredBuilding);
+		}
+		_hoveredBuilding = null;
+	}
+
+	private void ApplyHoverHighlight(Node node)
+	{
+		if (node is MeshInstance3D mi)
+		{
+			mi.MaterialOverlay = _highlightMaterial;
+		}
+		foreach (Node child in node.GetChildren())
+		{
+			ApplyHoverHighlight(child);
+		}
+	}
+
+	private void RemoveHighlightRecursively(Node node)
+	{
+		if (node is MeshInstance3D mi)
+		{
+			mi.MaterialOverlay = null;
+		}
+		foreach (Node child in node.GetChildren())
+		{
+			RemoveHighlightRecursively(child);
+		}
+	}
+
+	private Node3D GetBuildingUnderMouse()
+	{
+		Vector2 mousePos = GetViewport().GetMousePosition();
+		Vector3 rayOrigin = _camera.ProjectRayOrigin(mousePos);
+		Vector3 rayDirection = _camera.ProjectRayNormal(mousePos);
+		
+		var spaceState = GetWorld3D().DirectSpaceState;
+		var query = PhysicsRayQueryParameters3D.Create(rayOrigin, rayOrigin + rayDirection * 1000, 8);
+		var result = spaceState.IntersectRay(query);
+		
+		if (result.Count > 0)
+		{
+			Node collider = (Node)result["collider"];
+			return FindBuildingRoot(collider);
+		}
+		return null;
+	}
+
+	private Node3D FindBuildingRoot(Node node)
+	{
+		Node current = node;
+		while (current != null && current != GetTree().Root)
+		{
+			if (current.IsInGroup("Buildings") || current is ResidencePlot || current is Tree)
+			{
+				return current as Node3D;
+			}
+			current = current.GetParent();
+		}
+		return null;
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
@@ -155,35 +281,84 @@ public partial class BuildingManager : Node3D
 			Node parent = collider.GetParent();
 			
 			// We check both the parent and the parent's parent just in case
-			if (parent is ResidencePlot || (parent != null && parent.GetParent() is ResidencePlot))
+			Node3D building = FindBuildingRoot(collider);
+
+			if (building != null)
 			{
-				var actualHouse = parent is ResidencePlot ? (ResidencePlot)parent : (ResidencePlot)parent.GetParent();
-				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-				string status = actualHouse.IsConstructed ? $"Residents: {actualHouse.ResidentCount} / 5\nStatus: Cozy" : "Status: Under Construction";
-				if (hud != null) hud.ShowBuildingInfo(actualHouse, "Peasant House", status);
+				if (_isBulldozing)
+				{
+					DemolishBuilding(building);
+				}
+				else
+				{
+					ShowBuildingInfo(building);
+				}
 			}
-			else if (parent is BuilderGuild guild)
+		}
+	}
+
+	private void DemolishBuilding(Node3D building)
+	{
+		if (building is Tree) return; // Trees should be chopped, not bulldozed
+		
+		GD.Print($"Demolishing building: {building.Name}");
+		
+		if (building is ResidencePlot house)
+		{
+			var sim = GetNode<GlobalSimulation>("/root/GlobalSimulation");
+			if (house.IsConstructed)
 			{
-				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-				if (hud != null) hud.ShowBuildingInfo(guild, "Builder's Guild", "Active Builders: 2\nStatus: Employed");
+				sim.RemovePopulation(house.ResidentCount);
+				GD.Print($"Removed {house.ResidentCount} residents.");
 			}
-			else if (parent is ForagerHut hut)
+		}
+		
+		if (building == _hoveredBuilding) _hoveredBuilding = null;
+		building.QueueFree();
+	}
+
+	private void ShowBuildingInfo(Node3D building)
+	{
+		if (building is ResidencePlot actualHouse)
+		{
+			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+			string info = "";
+			if (actualHouse.IsConstructed)
 			{
-				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-				if (hud != null) hud.ShowBuildingInfo(hut, "Forager Hut", "Gathering Berries\nWorkers: 2\nStatus: Active");
-			}
-			else if (parent is FishingHut fHut)
-			{
-				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-				if (hud != null) hud.ShowBuildingInfo(fHut, "Fishing Hut", "Gathering Fish\nWorkers: 2\nStatus: Active");
+				info = $"[ POPULATION ]\nResidents: {actualHouse.ResidentCount} / 5\n\n[ STATUS ]\nCozy and Warm\nContributing to Village";
 			}
 			else
 			{
-				// Generic building info
-				string bName = parent.Name.ToString();
-				var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
-				if (hud != null) hud.ShowBuildingInfo((Node3D)parent, bName, "A fine addition to the village.\nStatus: Standing");
+				info = $"[ CONSTRUCTION ]\nProgress: {actualHouse.ConstructionProgress:F1}%\n\n[ STATUS ]\nIn Progress\nWaiting for Builders";
 			}
+			if (hud != null) hud.ShowBuildingInfo(actualHouse, "Peasant House", info);
+		}
+		else if (building is BuilderGuild guild)
+		{
+			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+			if (hud != null) hud.ShowBuildingInfo(guild, "Builder's Guild", "Active Builders: 2\nStatus: Employed");
+		}
+		else if (building is ForagerHut hut)
+		{
+			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+			if (hud != null) hud.ShowBuildingInfo(hut, "Forager Hut", "Gathering Berries\nWorkers: 2\nStatus: Active");
+		}
+		else if (building is FishingHut fHut)
+		{
+			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+			if (hud != null) hud.ShowBuildingInfo(fHut, "Fishing Hut", "Gathering Fish\nWorkers: 2\nStatus: Active");
+		}
+		else if (building is WoodcutterHut wHut)
+		{
+			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+			if (hud != null) hud.ShowBuildingInfo(wHut, "Woodcutter Hut", "Harvesting Trees\nWorkers: 2\nStatus: Active");
+		}
+		else
+		{
+			// Generic building info
+			string bName = building.Name.ToString();
+			var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+			if (hud != null) hud.ShowBuildingInfo(building, bName, "A fine addition to the village.\nStatus: Standing");
 		}
 	}
 
@@ -247,6 +422,7 @@ public partial class BuildingManager : Node3D
 		
 		// Move to Layer 4 (bit mask 8)
 		SetCollisionLayerRecursively(building, 8);
+		building.AddToGroup("Buildings");
 		
 		// Gravity Snap
 		float groundY = GetGroundYAt(position);
@@ -348,6 +524,7 @@ public partial class BuildingManager : Node3D
 			case "Guild": scene = BuilderGuildScene; break;
 			case "ForagerHut": scene = ForagerHutScene; break;
 			case "FishingHut": scene = FishingHutScene; break;
+			case "WoodcutterHut": scene = WoodcutterHutScene; break;
 		}
 
 		if (scene == null) return;

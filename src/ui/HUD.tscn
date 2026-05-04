@@ -142,6 +142,12 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "Town Center"
 
+[node name="Bulldoze" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "BULLDOZE"
+
 [node name="FoodGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
 visible = false
 layout_mode = 2
@@ -165,6 +171,12 @@ custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Meat Shop"
+
+[node name="BuildWoodcutter" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/FoodGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Woodcutter"
 
 [node name="TechGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
 visible = false

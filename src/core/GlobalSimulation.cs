@@ -28,6 +28,15 @@ public partial class GlobalSimulation : Node
 		EmitSignal(SignalName.SimulationTicked);
 	}
 
+	public void RemovePopulation(int amount)
+	{
+		Population -= amount;
+		UnemployedPopulation -= amount;
+		if (Population < 0) Population = 0;
+		if (UnemployedPopulation < 0) UnemployedPopulation = 0;
+		EmitSignal(SignalName.SimulationTicked);
+	}
+
 	public int RequestWorkers(int amount)
 	{
 		int assigned = Mathf.Min(amount, UnemployedPopulation);

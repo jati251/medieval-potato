@@ -15,6 +15,7 @@ public partial class ResidencePlot : Node3D
 	private GlobalSimulation _sim;
 	private Node3D _visuals;
 	private Node3D _scaffolding;
+	private List<VisualPop> _activeVisualPops = new List<VisualPop>();
 
 	public bool IsPreview { get; set; } = false;
 
@@ -34,6 +35,15 @@ public partial class ResidencePlot : Node3D
 			// Register with simulation as a pending construction site
 			_sim.RegisterConstructionSite(this);
 		}
+	}
+
+	public override void _ExitTree()
+	{
+		foreach (var pop in _activeVisualPops)
+		{
+			if (IsInstanceValid(pop)) pop.QueueFree();
+		}
+		_activeVisualPops.Clear();
 	}
 
 	public void AddProgress(float amount)
@@ -114,6 +124,10 @@ public partial class ResidencePlot : Node3D
 		var pop = PopScene.Instantiate<VisualPop>();
 		GetTree().Root.GetNode("root").AddChild(pop);
 		pop.GlobalPosition = GlobalPosition;
+		_activeVisualPops.Add(pop);
+
+		// Clean up invalid references
+		_activeVisualPops.RemoveAll(p => !IsInstanceValid(p));
 
 		var root = GetTree().Root.GetNode("root");
 		var market = root.GetNode<Marker3D>("MarketMarker");
