@@ -12,16 +12,20 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene FishingHutScene { get; set; }
 	[Export] public PackedScene WoodcutterHutScene { get; set; }
 	[Export] public PackedScene HunterHutScene { get; set; }
+	[Export] public PackedScene WellScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
 	private bool _isBulldozing = false;
+	private bool _isZoning = false;
 	private PackedScene _currentScene;
 	private Camera3D _camera;
 	private Node3D _ground;
 	private Node3D _previewHouse;
 	private Node3D _hoveredBuilding;
 	private StandardMaterial3D _highlightMaterial;
+	private ZoneManager _zoneManager;
+	private MeshInstance3D _zoneBrushPreview;
 
 	public override void _Ready()
 	{
@@ -29,14 +33,53 @@ public partial class BuildingManager : Node3D
 		_camera = GetViewport().GetCamera3D();
 		_currentScene = HouseScene;
 		
+		// Load Well scene if not assigned in Inspector
+		if (WellScene == null)
+		{
+			WellScene = GD.Load<PackedScene>("res://src/buildings/production/Well.tscn");
+		}
+
 		_highlightMaterial = new StandardMaterial3D();
 		_highlightMaterial.AlbedoColor = new Color(1, 0, 0, 0.3f);
 		_highlightMaterial.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
 		_highlightMaterial.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
 		_highlightMaterial.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
 
+		// Ensure ZoneManager exists
+		var zoneMgr = GetTree().Root.FindChild("ZoneManager", true, false);
+		if (zoneMgr == null)
+		{
+			GD.Print("BuildingManager: Creating ZoneManager...");
+			var newZoneMgr = new ZoneManager();
+			newZoneMgr.Name = "ZoneManager";
+			var root = GetTree().CurrentScene;
+			if (root != null) root.CallDeferred(MethodName.AddChild, newZoneMgr);
+			else GetTree().Root.CallDeferred(MethodName.AddChild, newZoneMgr);
+		}
+
 		// Initial Census: Move all pre-placed buildings to Layer 4 (bit mask 8)
 		CallDeferred(nameof(InitialCensus));
+		SetupZoneBrushPreview();
+	}
+
+	private void SetupZoneBrushPreview()
+	{
+		_zoneBrushPreview = new MeshInstance3D();
+		var mesh = new CylinderMesh();
+		mesh.TopRadius = 2.5f; // Match BrushRadius in ZoneManager
+		mesh.BottomRadius = 2.5f;
+		mesh.Height = 0.2f;
+		_zoneBrushPreview.Mesh = mesh;
+		
+		var mat = new StandardMaterial3D();
+		mat.AlbedoColor = new Color(0.2f, 1.0f, 0.2f, 0.2f);
+		mat.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
+		mat.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
+		mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+		_zoneBrushPreview.MaterialOverride = mat;
+		
+		_zoneBrushPreview.Visible = false;
+		AddChild(_zoneBrushPreview);
 	}
 
 	private void InitialCensus()
@@ -73,6 +116,7 @@ public partial class BuildingManager : Node3D
 			case "FishingHut": _currentScene = FishingHutScene; break;
 			case "WoodcutterHut": _currentScene = WoodcutterHutScene; break;
 			case "HunterHut": _currentScene = HunterHutScene; break;
+			case "Well": _currentScene = WellScene; break;
 		}
 		
 		if (_currentScene == null) 
@@ -104,6 +148,18 @@ public partial class BuildingManager : Node3D
 		{
 			ClearHoverHighlight();
 		}
+	}
+
+	public void SetZoneMode(bool active)
+	{
+		_isZoning = active;
+		if (_isZoning)
+		{
+			ToggleBuilding(false);
+			_isBulldozing = false;
+		}
+		var zoneMgr = GetTree().Root.FindChild("ZoneManager", true, false) as ZoneManager;
+		if (zoneMgr != null) zoneMgr.IsPainting = active;
 	}
 
 	public void ToggleBuilding(bool active)
@@ -165,6 +221,50 @@ public partial class BuildingManager : Node3D
 		if (_isBulldozing)
 		{
 			UpdateBulldozeHover();
+		}
+
+		if (_isZoning)
+		{
+			UpdateZoning();
+			var res = GetMouseWorldPosition();
+			if (res.Hit && _zoneBrushPreview != null)
+			{
+				_zoneBrushPreview.GlobalPosition = res.Position + Vector3.Up * 0.2f;
+				_zoneBrushPreview.Visible = true;
+			}
+			else if (_zoneBrushPreview != null)
+			{
+				_zoneBrushPreview.Visible = false;
+			}
+		}
+		else if (_zoneBrushPreview != null)
+		{
+			_zoneBrushPreview.Visible = false;
+		}
+	}
+
+	private void UpdateZoning()
+	{
+		if (_zoneManager == null)
+		{
+			_zoneManager = GetTree().Root.FindChild("ZoneManager", true, false) as ZoneManager;
+		}
+
+		if (Input.IsMouseButtonPressed(MouseButton.Left))
+		{
+			var res = GetMouseWorldPosition();
+			if (res.Hit && _zoneManager != null)
+			{
+				_zoneManager.PaintZone(res.Position);
+			}
+		}
+		else if (Input.IsMouseButtonPressed(MouseButton.Right))
+		{
+			var res = GetMouseWorldPosition();
+			if (res.Hit && _zoneManager != null)
+			{
+				_zoneManager.EraseZone(res.Position);
+			}
 		}
 	}
 
@@ -259,7 +359,7 @@ public partial class BuildingManager : Node3D
 					PlaceBuilding(res.Position, res.Normal);
 				}
 			}
-			else
+			else if (!_isZoning)
 			{
 				CheckForBuildingClick();
 			}
@@ -332,6 +432,7 @@ public partial class BuildingManager : Node3D
 		else if (building is FishingHut) title = "Fishing Hut";
 		else if (building is WoodcutterHut) title = "Woodcutter Hut";
 		else if (building is HunterHut) title = "Hunter Hut";
+		else if (building is Well) title = "Water Well";
 		else title = building.Name.ToString();
 
 		hud.ShowBuildingInfo(building, title);
@@ -499,7 +600,8 @@ public partial class BuildingManager : Node3D
 			case "Guild": scene = BuilderGuildScene; break;
 			case "ForagerHut": scene = ForagerHutScene; break;
 			case "FishingHut": scene = FishingHutScene; break;
-			case "WoodcutterHut": scene = WoodcutterHutScene; break;
+			case "HunterHut": scene = HunterHutScene; break;
+			case "Well": scene = WellScene; break;
 		}
 
 		if (scene == null) return;
@@ -508,5 +610,23 @@ public partial class BuildingManager : Node3D
 		GetTree().CurrentScene.AddChild(building);
 		building.GlobalPosition = position;
 		building.GlobalRotation = new Vector3(0, rotation, 0);
+		SetCollisionLayerRecursively(building, 8);
+		building.AddToGroup("Buildings");
+	}
+
+	public bool IsSpotOccupied(Vector3 position, float radius)
+	{
+		var spaceState = GetWorld3D().DirectSpaceState;
+		var query = new PhysicsShapeQueryParameters3D();
+		var shape = new SphereShape3D();
+		shape.Radius = radius;
+		query.Shape = shape;
+		query.Transform = new Transform3D(Basis.Identity, position + Vector3.Up * 1.0f);
+		
+		// Mask 8: Buildings, Mask 2: Water
+		query.CollisionMask = 8 | 2; 
+		
+		var results = spaceState.IntersectShape(query);
+		return results.Count > 0;
 	}
 }

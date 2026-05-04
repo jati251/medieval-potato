@@ -65,7 +65,14 @@ public partial class GlobalSimulation : Node
 		// Critical: Check if the house still exists in the world
 		_pendingConstruction.RemoveAll(s => !IsInstanceValid(s) || s.IsConstructed);
 		
-		if (_pendingConstruction.Count > 0) return _pendingConstruction[0];
+		foreach (var site in _pendingConstruction)
+		{
+			if (!site.IsAssigned)
+			{
+				site.IsAssigned = true;
+				return site;
+			}
+		}
 		return null;
 	}
 
@@ -191,7 +198,6 @@ public partial class GlobalSimulation : Node
 		if (Food < 0) Food = 0;
 		
 		// We use a safe signal emission - Godot handles dead listeners automatically 
-		// but checking for validity in the HUD side is safer.
 		EmitSignal(SignalName.SimulationTicked);
 	}
 }

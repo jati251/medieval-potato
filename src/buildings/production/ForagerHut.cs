@@ -8,6 +8,7 @@ public partial class ForagerHut : StaticBody3D
     [Export] public float SearchRadius { get; set; } = 30.0f;
 
     private int _assignedWorkers = 0;
+    private float _totalBerriesHarvested = 0;
     private GlobalSimulation _sim;
     private Timer _assignmentTimer;
     private Timer _spawnTimer;
@@ -76,9 +77,10 @@ public partial class ForagerHut : StaticBody3D
 
             forager.WalkPath(fullTrip.ToArray());
             
-            // Add food when they finish (simplified: add now)
+            // Add food when they finish
             float harvested = target.Harvest(5.0f);
             _sim.Food += harvested;
+            _totalBerriesHarvested += harvested;
         }
     }
 

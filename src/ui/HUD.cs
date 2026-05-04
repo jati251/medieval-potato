@@ -13,6 +13,7 @@ public partial class HUD : CanvasLayer
 	private bool _isRoadMode = false;
 	private bool _isHouseMode = false;
 	private bool _isBulldozeMode = false;
+	private bool _isZoningMode = false;
 	private string _currentBuildingType = "";
 
 	private Node3D _followTarget;
@@ -72,7 +73,19 @@ public partial class HUD : CanvasLayer
 		}
 		else if (name.Contains("Forager"))
 		{
-			info = "[ PRODUCTION ]\nGathering Berries\nWorkers: 2\nStatus: Active";
+			// Using dynamic/reflection to get the harvest total if possible, or just checking the type
+			float total = 0;
+			if (_followTarget is ForagerHut hut)
+			{
+				// We added this field to ForagerHut.cs
+				var field = hut.GetType().GetField("_totalBerriesHarvested", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+				if (field != null) total = (float)field.GetValue(hut);
+			}
+			info = $"[ PRODUCTION ]\nGathering Berries\nWorkers: 2\n\n[ DETAILS ]\nTotal Harvested: {total:F1}\nEfficiency: 100%";
+		}
+		else if (name.Contains("Well"))
+		{
+			info = "[ PRODUCTION ]\nDrawing Fresh Water\nStatus: Active\n\n[ DETAILS ]\nVital for Survival";
 		}
 		else if (name.Contains("Fishing"))
 		{
@@ -209,7 +222,8 @@ public partial class HUD : CanvasLayer
 			{"FoodGroup/BuildForager", "ForagerHut"},
 			{"FoodGroup/BuildFishing", "FishingHut"},
 			{"FoodGroup/BuildWoodcutter", "WoodcutterHut"},
-			{"FoodGroup/BuildHunter", "HunterHut"}
+			{"FoodGroup/BuildHunter", "HunterHut"},
+			{"FoodGroup/BuildWell", "Well"}
 		};
 
 		foreach (var pair in btns)
@@ -232,6 +246,9 @@ public partial class HUD : CanvasLayer
 
 		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/Bulldoze") is Button bulldozeBtn)
 			bulldozeBtn.Pressed += OnBulldozeButtonPressed;
+
+		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/ZoneRes") is Button zoneBtn)
+			zoneBtn.Pressed += OnZoneButtonPressed;
 
 		if (GetNodeOrNull<Button>("BuildingInfoPopup/Panel/VBoxContainer/CloseButton") is Button b) b.Pressed += OnClosePopup;
 
@@ -303,10 +320,12 @@ public partial class HUD : CanvasLayer
 			_currentBuildingType = type;
 			_isRoadMode = false;
 			_isBulldozeMode = false;
+			_isZoningMode = false;
 			if (_roadManager != null) _roadManager.ToggleBuilding(false);
 			_buildingManager.SetBuildingType(type);
 			_buildingManager.ToggleBuilding(true);
 			_buildingManager.SetBulldozeMode(false);
+			_buildingManager.SetZoneMode(false);
 		}
 		UpdateButtons();
 	}
@@ -322,6 +341,7 @@ public partial class HUD : CanvasLayer
 			{
 				_buildingManager.ToggleBuilding(false); 
 				_buildingManager.SetBulldozeMode(false);
+				_buildingManager.SetZoneMode(false);
 			}
 		}
 		_roadManager.ToggleBuilding(_isRoadMode);
@@ -335,11 +355,35 @@ public partial class HUD : CanvasLayer
 		{
 			_isHouseMode = false;
 			_isRoadMode = false;
-			if (_buildingManager != null) _buildingManager.ToggleBuilding(false);
+			_isZoningMode = false;
+			if (_buildingManager != null) 
+			{
+				_buildingManager.ToggleBuilding(false);
+				_buildingManager.SetZoneMode(false);
+			}
 			if (_roadManager != null) _roadManager.ToggleBuilding(false);
 		}
 		
 		if (_buildingManager != null) _buildingManager.SetBulldozeMode(_isBulldozeMode);
+		UpdateButtons();
+	}
+
+	private void OnZoneButtonPressed()
+	{
+		_isZoningMode = !_isZoningMode;
+		if (_isZoningMode)
+		{
+			_isHouseMode = false;
+			_isRoadMode = false;
+			_isBulldozeMode = false;
+			if (_buildingManager != null) 
+			{
+				_buildingManager.ToggleBuilding(false);
+				_buildingManager.SetBulldozeMode(false);
+			}
+			if (_roadManager != null) _roadManager.ToggleBuilding(false);
+		}
+		if (_buildingManager != null) _buildingManager.SetZoneMode(_isZoningMode);
 		UpdateButtons();
 	}
 
@@ -356,7 +400,8 @@ public partial class HUD : CanvasLayer
 			{"BuildForager", "Forager Hut"},
 			{"BuildFishing", "Fishing Hut"},
 			{"BuildWoodcutter", "Woodcutter Hut"},
-			{"BuildHunter", "Hunter Hut"}
+			{"BuildHunter", "Hunter Hut"},
+			{"BuildWell", "Well"}
 		};
 
 		foreach (var group in btnGroups)
@@ -396,6 +441,17 @@ public partial class HUD : CanvasLayer
 			bulldozeBtn.Text = _isBulldozeMode ? "STOP BULLDOZE" : "BULLDOZE";
 			bulldozeBtn.Modulate = _isBulldozeMode ? Colors.Red : Colors.White;
 		}
+
+		var zoneBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/ZoneRes");
+		if (zoneBtn != null)
+		{
+			zoneBtn.Text = _isZoningMode ? "STOP ZONING" : "ZONE RES";
+			zoneBtn.Modulate = _isZoningMode ? Colors.Green : Colors.White;
+		}
+
+		// Hide manual house build to encourage zoning
+		var houseBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/BuildHouse");
+		if (houseBtn != null) houseBtn.Visible = false;
 	}
 
 	public override void _Process(double delta)
@@ -405,26 +461,29 @@ public partial class HUD : CanvasLayer
 			Vector3 worldPos = _followTarget.GlobalPosition + Vector3.Up * 2.5f;
 			Vector2 screenPos = _camera.UnprojectPosition(worldPos);
 			_infoPopup.Position = screenPos - (_infoPopup.GetNode<Control>("Panel").Size / 2.0f);
-			
-			// Dynamic Update
-			UpdateBuildingInfoDisplay();
-		}
-		
-		_popLabel.Text = $"Population: {_sim.Population} ({_sim.UnemployedPopulation} Unemployed)";
-		_foodLabel.Text = $"Food: {_sim.Food:F1}";
-		_woodLabel.Text = $"Wood: {_sim.Wood:F0}";
-
-		var timeMgr = GetNodeOrNull<TimeManager>("/root/TimeManager");
-		if (timeMgr != null)
-		{
-			_popLabel.Text = timeMgr.GetFormattedTime() + "\n" + _popLabel.Text;
 		}
 	}
 
 	private void UpdateDisplay()
 	{
-		if (_popLabel != null) _popLabel.Text = $"Population: {_sim.Population} ({_sim.UnemployedPopulation} Unemployed)";
+		if (_popLabel != null) 
+		{
+			string popText = $"Population: {_sim.Population} ({_sim.UnemployedPopulation} Unemployed)";
+			var timeMgr = GetNodeOrNull<TimeManager>("/root/TimeManager");
+			if (timeMgr != null)
+			{
+				popText = timeMgr.GetFormattedTime() + "\n" + popText;
+			}
+			_popLabel.Text = popText;
+		}
+		
 		if (_foodLabel != null) _foodLabel.Text = $"Food: {_sim.Food:F1}";
-		if (_woodLabel != null) _woodLabel.Text = $"Wood: {_sim.Wood}";
+		if (_woodLabel != null) _woodLabel.Text = $"Wood: {_sim.Wood:F0}";
+
+		// Update popup info if visible
+		if (_infoPopup != null && _infoPopup.Visible)
+		{
+			UpdateBuildingInfoDisplay();
+		}
 	}
 }

@@ -9,15 +9,18 @@ public partial class ResidencePlot : Node3D
 	
 	public int ResidentCount { get; private set; } = 0;
 	public float ConstructionProgress { get; private set; } = 0.0f;
+	public float Happiness { get; private set; } = 1.0f; // 0.0 to 1.0
 	public bool IsConstructed => ConstructionProgress >= 100.0f;
+	public bool IsAssigned { get; set; } = false;
+	public bool IsPreview { get; set; } = false;
 
 	private Timer _spawnTimer;
+	private Timer _moodTimer;
 	private GlobalSimulation _sim;
 	private Node3D _visuals;
 	private Node3D _scaffolding;
+	private Label3D _moodEmote;
 	private List<VisualPop> _activeVisualPops = new List<VisualPop>();
-
-	public bool IsPreview { get; set; } = false;
 
 	public override void _Ready()
 	{
@@ -28,13 +31,31 @@ public partial class ResidencePlot : Node3D
 		_visuals = GetNode<Node3D>("Visuals");
 		_scaffolding = GetNode<Node3D>("Scaffolding");
 
+		SetupMoodEmote();
+
+		_moodTimer = new Timer();
+		_moodTimer.WaitTime = 5.0f;
+		_moodTimer.Autostart = true;
+		_moodTimer.Timeout += UpdateMood;
+		AddChild(_moodTimer);
+
 		UpdateVisuals();
 
 		if (!IsPreview)
 		{
-			// Register with simulation as a pending construction site
 			_sim.RegisterConstructionSite(this);
 		}
+	}
+
+	private void SetupMoodEmote()
+	{
+		_moodEmote = new Label3D();
+		_moodEmote.Text = "😟"; // Resah emote
+		_moodEmote.FontSize = 128;
+		_moodEmote.Billboard = BaseMaterial3D.BillboardModeEnum.Enabled;
+		_moodEmote.Position = Vector3.Up * 3.5f;
+		_moodEmote.Visible = false;
+		AddChild(_moodEmote);
 	}
 
 	public override void _ExitTree()
@@ -111,9 +132,54 @@ public partial class ResidencePlot : Node3D
 		_spawnTimer.WaitTime = GD.RandRange(15.0, 45.0);
 	}
 
+	private void UpdateMood()
+	{
+		if (!IsConstructed) return;
+
+		float targetHappiness = 1.0f;
+
+		// Factor 1: Proximity to Well
+		if (!IsNearWell())
+		{
+			targetHappiness -= 0.5f; // Big hit for no water access
+		}
+
+		// Factor 2: Global Food
+		if (_sim.Food <= 0)
+		{
+			targetHappiness -= 0.4f;
+		}
+
+		// Smoothly transition happiness
+		Happiness = Mathf.Lerp(Happiness, targetHappiness, 0.1f);
+
+		// Show emote if resah (unhappy)
+		if (_moodEmote != null)
+		{
+			_moodEmote.Visible = Happiness < 0.6f;
+		}
+	}
+
+	private bool IsNearWell()
+	{
+		var buildings = GetTree().GetNodesInGroup("Buildings");
+		foreach (Node b in buildings)
+		{
+			if (b.Name.ToString().Contains("Well") && b is Node3D b3d)
+			{
+				if (GlobalPosition.DistanceTo(b3d.GlobalPosition) < 15.0f)
+					return true;
+			}
+		}
+		return false;
+	}
+
 	private void SpawnVisualPop()
 	{
 		if (PopScene == null || !IsConstructed) return;
+
+		// Unhappy people move slower or don't go out as much?
+		if (Happiness < 0.4f && GD.Randf() > 0.5f) return; 
 
 		var pop = PopScene.Instantiate<VisualPop>();
 		GetTree().Root.GetNode("root").AddChild(pop);

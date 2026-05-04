@@ -76,6 +76,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Wood: 50"
 
+
 [node name="BottomBar" type="Panel" parent="."]
 anchors_preset = 12
 anchor_top = 1.0
@@ -142,6 +143,12 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "Town Center"
 
+[node name="ZoneRes" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Zone Res"
+
 [node name="Bulldoze" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
 custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
@@ -183,6 +190,12 @@ custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Hunter"
+
+[node name="BuildWell" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/FoodGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Well"
 
 [node name="TechGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
 visible = false

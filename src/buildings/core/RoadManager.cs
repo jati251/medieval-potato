@@ -4,21 +4,20 @@ using System.Collections.Generic;
 
 public partial class RoadManager : Node3D
 {
-	[Export] public float GridSize { get; set; } = 0.6f; // Smaller grid for finer, more detailed paths
+	[Export] public float GridSize { get; set; } = 0.8f; 
 	[Export] public float UsageThreshold { get; set; } = 2.0f;
-	[Export] public float DecayRate { get; set; } = 0.03f; // Slower decay
-	[Export] public int MaxRoadTiles { get; set; } = 10000; // Increased to allow for smaller tiles
+	[Export] public float DecayRate { get; set; } = 0.05f;
+	[Export] public int MaxRoadTiles { get; set; } = 8000; 
 
 	private Dictionary<Vector2I, float> _heatmap = new Dictionary<Vector2I, float>();
 	private Dictionary<Vector2I, int> _tileToIndex = new Dictionary<Vector2I, int>();
 	private List<Vector2I> _activeTiles = new List<Vector2I>();
 	
 	private AStarGrid2D _astarGrid = new AStarGrid2D();
-	private Rect2I _gridRegion = new Rect2I(-400, -400, 800, 800); // 480x480m area at 0.6m grid
+	private Rect2I _gridRegion = new Rect2I(-250, -250, 500, 500); 
 
 	private MultiMeshInstance3D _multiMesh;
 	private GlobalSimulation _sim;
-	private bool _needsVisualUpdate = false;
 
 	public override void _Ready()
 	{
@@ -37,25 +36,50 @@ public partial class RoadManager : Node3D
 		_multiMesh = new MultiMeshInstance3D();
 		_multiMesh.Multimesh = new MultiMesh();
 		_multiMesh.Multimesh.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
-		_multiMesh.Multimesh.UseColors = true;
+		
+		// We avoid ColorFormat and CustomDataFormat to maximize compatibility across Godot 4 versions.
+		// We will pass the 'usage' score through the Scale of the Transform.
+		
 		_multiMesh.Multimesh.InstanceCount = MaxRoadTiles;
 		_multiMesh.Multimesh.VisibleInstanceCount = 0;
 
-		// Use a very low-profile cylinder (basically a disc)
 		var mesh = new CylinderMesh();
-		mesh.TopRadius = 0.5f; // Base radius
-		mesh.BottomRadius = 0.5f;
-		mesh.Height = 0.005f; // Very thin
+		mesh.TopRadius = 0.6f;
+		mesh.BottomRadius = 0.6f;
+		mesh.Height = 0.01f;
 		mesh.RadialSegments = 6;
 		
-		var mat = new StandardMaterial3D();
-		// Darker, desaturated brown for a more realistic dirt look
-		mat.AlbedoColor = new Color(0.25f, 0.18f, 0.12f); 
-		mat.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
-		mat.VertexColorUseAsAlbedo = true;
-		mat.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
+		var shaderMaterial = new ShaderMaterial();
+		shaderMaterial.Shader = new Shader();
+		shaderMaterial.Shader.Code = @"
+			shader_type spatial;
+			render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_schlick_ggx;
+
+			void vertex() {
+				// We passed the usage score into the X-scale of the instance transform
+				float usage = length(MODEL_MATRIX[0].xyz);
+				
+				float visual_scale = clamp(usage / 10.0, 0.3, 1.2);
+				float alpha_val = clamp(usage / 3.0, 0.0, 0.85);
+				
+				mat4 base_wm = MODELVIEW_MATRIX;
+				base_wm[0] = normalize(base_wm[0]) * visual_scale;
+				base_wm[1] = normalize(base_wm[1]);
+				base_wm[2] = normalize(base_wm[2]) * visual_scale;
+				MODELVIEW_MATRIX = base_wm;
+				
+				COLOR.a = alpha_val;
+			}
+
+			void fragment() {
+				ALBEDO = vec3(0.25, 0.18, 0.12); // Dirt color
+				ALPHA = COLOR.a;
+				ROUGHNESS = 0.9; // Rough dirt surface
+				SPECULAR = 0.1;
+			}
+		";
 		
-		mesh.Material = mat;
+		mesh.Material = shaderMaterial;
 		_multiMesh.Multimesh.Mesh = mesh;
 		
 		AddChild(_multiMesh);
@@ -84,66 +108,83 @@ public partial class RoadManager : Node3D
 
 		_heatmap[coords] += 1.0f;
 
-		// Pathfinding cost reduction
 		float usage = _heatmap[coords];
-		float weight = Mathf.Max(0.3f, 1.0f - (usage / 10.0f));
-		_astarGrid.SetPointWeightScale(coords, weight);
-
-		if (usage >= UsageThreshold && !_tileToIndex.ContainsKey(coords))
-		{
-			if (_activeTiles.Count < MaxRoadTiles)
-			{
-				int index = _activeTiles.Count;
-				_tileToIndex[coords] = index;
-				_activeTiles.Add(coords);
-				
-				Vector3 worldPos = GridToWorld(coords);
-				// Random jitter to make it look scattered
-				float jitter = GridSize * 0.4f;
-				worldPos.X += (float)GD.RandRange(-jitter, jitter);
-				worldPos.Z += (float)GD.RandRange(-jitter, jitter);
-				
-				Transform3D t = new Transform3D(Basis.Identity, worldPos + Vector3.Up * 0.015f);
-				// Add random tilt and rotation for variation
-				t.Basis = t.Basis.Rotated(Vector3.Up, (float)GD.RandRange(0, Mathf.Pi * 2));
-				
-				_multiMesh.Multimesh.SetInstanceTransform(index, t);
-				_multiMesh.Multimesh.VisibleInstanceCount = _activeTiles.Count;
-			}
-		}
 		
-		_needsVisualUpdate = true;
-	}
-
-	public override void _Process(double delta)
-	{
-		if (_needsVisualUpdate)
+		if (Mathf.RoundToInt(usage) % 5 == 0)
 		{
-			UpdateAllVisuals();
-			_needsVisualUpdate = false;
+			float weight = Mathf.Max(0.3f, 1.0f - (usage / 15.0f));
+			_astarGrid.SetPointWeightScale(coords, weight);
+		}
+
+		if (usage >= UsageThreshold)
+		{
+			if (!_tileToIndex.ContainsKey(coords))
+			{
+				SpawnRoadTile(coords);
+			}
+			else
+			{
+				int index = _tileToIndex[coords];
+				UpdateInstanceTransform(index, coords, usage);
+			}
 		}
 	}
 
 	private void OnSimulationTick()
 	{
 		List<Vector2I> toRemove = new List<Vector2I>();
-		foreach (var key in _heatmap.Keys)
+		
+		for (int i = 0; i < _activeTiles.Count; i++)
 		{
+			Vector2I key = _activeTiles[i];
 			_heatmap[key] -= DecayRate;
-			if (_heatmap[key] <= 0) toRemove.Add(key);
+			float usage = _heatmap[key];
+			
+			if (usage <= 0)
+			{
+				toRemove.Add(key);
+			}
+			else
+			{
+				UpdateInstanceTransform(i, key, usage);
+			}
 		}
 
 		foreach (var key in toRemove)
 		{
 			_heatmap.Remove(key);
 			_astarGrid.SetPointWeightScale(key, 1.0f);
-			if (_tileToIndex.ContainsKey(key))
-			{
-				RemoveTileVisual(key);
-			}
+			RemoveTileVisual(key);
 		}
+	}
+
+	private void SpawnRoadTile(Vector2I coords)
+	{
+		if (_activeTiles.Count >= MaxRoadTiles) return;
+
+		int index = _activeTiles.Count;
+		_tileToIndex[coords] = index;
+		_activeTiles.Add(coords);
 		
-		_needsVisualUpdate = true;
+		UpdateInstanceTransform(index, coords, _heatmap[coords]);
+		_multiMesh.Multimesh.VisibleInstanceCount = _activeTiles.Count;
+	}
+
+	private void UpdateInstanceTransform(int index, Vector2I coords, float usage)
+	{
+		Vector3 worldPos = GridToWorld(coords);
+		// Note: We use a fixed seed based on coords so jitter is consistent
+		GD.Seed((ulong)(coords.X * 1000 + coords.Y));
+		float jitter = GridSize * 0.4f;
+		worldPos.X += (float)GD.RandRange(-jitter, jitter);
+		worldPos.Z += (float)GD.RandRange(-jitter, jitter);
+		float rot = (float)GD.RandRange(0, Mathf.Pi * 2);
+		
+		Transform3D t = new Transform3D(Basis.Identity, worldPos + Vector3.Up * 0.015f);
+		// Important: Pass 'usage' score into the scale
+		t.Basis = t.Basis.Rotated(Vector3.Up, rot).Scaled(new Vector3(usage, 1, usage));
+		
+		_multiMesh.Multimesh.SetInstanceTransform(index, t);
 	}
 
 	private void RemoveTileVisual(Vector2I coords)
@@ -155,10 +196,8 @@ public partial class RoadManager : Node3D
 		{
 			Vector2I lastCoords = _activeTiles[lastIndex];
 			Transform3D lastTransform = _multiMesh.Multimesh.GetInstanceTransform(lastIndex);
-			Color lastColor = _multiMesh.Multimesh.GetInstanceColor(lastIndex);
 			
 			_multiMesh.Multimesh.SetInstanceTransform(indexToRemove, lastTransform);
-			_multiMesh.Multimesh.SetInstanceColor(indexToRemove, lastColor);
 			
 			_tileToIndex[lastCoords] = indexToRemove;
 			_activeTiles[indexToRemove] = lastCoords;
@@ -167,27 +206,6 @@ public partial class RoadManager : Node3D
 		_activeTiles.RemoveAt(lastIndex);
 		_tileToIndex.Remove(coords);
 		_multiMesh.Multimesh.VisibleInstanceCount = _activeTiles.Count;
-	}
-
-	private void UpdateAllVisuals()
-	{
-		for (int i = 0; i < _activeTiles.Count; i++)
-		{
-			Vector2I coords = _activeTiles[i];
-			float usage = _heatmap[coords];
-			
-			// Smaller, tighter scaling
-			float scaleFactor = Mathf.Clamp(usage / 8.0f, 0.3f, 1.0f) * GridSize * 1.5f;
-			float alpha = Mathf.Clamp(usage / UsageThreshold, 0.1f, 0.9f);
-			
-			Transform3D t = _multiMesh.Multimesh.GetInstanceTransform(i);
-			// Keep the random rotation but update the scale
-			Basis b = t.Basis.Orthonormalized();
-			t.Basis = b.Scaled(new Vector3(scaleFactor, 1, scaleFactor));
-			
-			_multiMesh.Multimesh.SetInstanceTransform(i, t);
-			_multiMesh.Multimesh.SetInstanceColor(i, new Color(1, 1, 1, alpha));
-		}
 	}
 
 	public Vector3[] GetRoadPath(Vector3 start, Vector3 end)
