@@ -1,14 +1,25 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Grass"]
-albedo_color = Color(0.2, 0.4, 0.1, 1)
+[ext_resource type="Shader" path="res://src/environment/Grass.gdshader" id="1_shader"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_Grass"]
-material = SubResource("StandardMaterial3D_Grass")
-size = Vector3(0.5, 0.1, 0.5)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_grass"]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/color_top = Color(0.2, 0.6, 0.1, 1)
+shader_parameter/color_bottom = Color(0.1, 0.3, 0.05, 1)
+shader_parameter/wind_speed = 1.0
+shader_parameter/wind_strength = 0.2
+
+[sub_resource type="QuadMesh" id="QuadMesh_grass"]
+material = SubResource("ShaderMaterial_grass")
+size = Vector2(1, 1)
 
 [node name="Grass" type="Node3D"]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
-mesh = SubResource("BoxMesh_Grass")
+[node name="Blade1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("QuadMesh_grass")
+
+[node name="Blade2" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0.5, 0)
+mesh = SubResource("QuadMesh_grass")

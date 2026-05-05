@@ -124,6 +124,11 @@ custom_minimum_size = Vector2(100, 30)
 layout_mode = 2
 text = "Zones"
 
+[node name="CatDisaster" type="Button" parent="BottomBar/VBoxContainer/CategoryBar"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "Disaster"
+
 [node name="MarginContainer" type="MarginContainer" parent="BottomBar/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -140,12 +145,6 @@ custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Build Road"
-
-[node name="BuildHouse" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
-custom_minimum_size = Vector2(120, 50)
-layout_mode = 2
-size_flags_vertical = 4
-text = "Build House"
 
 [node name="BuildTownCenter" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/GeneralGroup"]
 custom_minimum_size = Vector2(120, 50)
@@ -242,3 +241,15 @@ custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Erase Zone"
+
+[node name="DisasterGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BuildFire" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/DisasterGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Fire"

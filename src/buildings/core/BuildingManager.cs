@@ -15,12 +15,14 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene StoneMineScene { get; set; }
 	[Export] public PackedScene HunterHutScene { get; set; }
 	[Export] public PackedScene WellScene { get; set; }
+	[Export] public PackedScene FireScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
 	
 	private bool _isBuilding = false;
 	private bool _isBulldozing = false;
 	private bool _isZoning = false;
 	private bool _isZoningErase = false;
+	private string _currentBuildingType = "";
 	private PackedScene _currentScene;
 	private Camera3D _camera;
 	private Node3D _ground;
@@ -124,6 +126,7 @@ public partial class BuildingManager : Node3D
 
 	public void SetBuildingType(string type)
 	{
+		_currentBuildingType = type;
 		GD.Print($"Setting building type: {type}");
 		switch (type)
 		{
@@ -138,6 +141,7 @@ public partial class BuildingManager : Node3D
 			case "StoneMine": _currentScene = StoneMineScene; break;
 			case "HunterHut": _currentScene = HunterHutScene; break;
 			case "Well": _currentScene = WellScene; break;
+			case "Fire": _currentScene = FireScene; break;
 		}
 		
 		if (_currentScene == null) 
@@ -427,19 +431,31 @@ public partial class BuildingManager : Node3D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed && mouseButton.ButtonIndex == MouseButton.Left)
+		if (@event is InputEventMouseButton mouseButton && mouseButton.Pressed)
 		{
-			if (_isBuilding)
+			if (mouseButton.ButtonIndex == MouseButton.Left)
 			{
-				var res = GetMouseWorldPosition();
-				if (res.Hit)
+				if (_isBuilding)
 				{
-					PlaceBuilding(res.Position, res.Normal);
+					var res = GetMouseWorldPosition();
+					if (res.Hit)
+					{
+						PlaceBuilding(res.Position, res.Normal);
+					}
+				}
+				else if (!_isZoning)
+				{
+					CheckForBuildingClick();
 				}
 			}
-			else if (!_isZoning)
+			else if (mouseButton.ButtonIndex == MouseButton.Right)
 			{
-				CheckForBuildingClick();
+				// Cancel building or zoning mode on right click
+				if (_isBuilding || _isBulldozing || _isZoning)
+				{
+					var hud = GetTree().Root.FindChild("HUD", true, false) as HUD;
+					if (hud != null) hud.CancelPlacement();
+				}
 			}
 		}
 	}
@@ -559,12 +575,14 @@ public partial class BuildingManager : Node3D
 		// Map Border Check
 		if (Mathf.Abs(position.X) > 248 || Mathf.Abs(position.Z) > 248) return;
 
+		GD.Print($"BuildingManager: Placing - {_currentBuildingType} (Scene: {(_currentScene != null ? _currentScene.ResourcePath : "NULL")})");
+		
 		// Deep Water Check
 		if (IsPositionOnWater(position)) return;
 
-		// Occupied Check
+		// Occupied Check (Skip for disasters)
 		float radius = GetBuildingRadius(_currentScene);
-		if (IsSpotOccupied(position, radius))
+		if (_currentScene != FireScene && IsSpotOccupied(position, radius))
 		{
 			GD.Print("Cannot place building here - spot is occupied!");
 			return;
@@ -581,6 +599,7 @@ public partial class BuildingManager : Node3D
 		}
 
 		var building = _currentScene.Instantiate<Node3D>();
+		GD.Print($"BuildingManager: Successfully instantiated {building.Name} at {position}");
 		GetTree().CurrentScene.AddChild(building);
 		
 		// Move to Layer 4 (bit mask 8)

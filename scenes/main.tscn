@@ -31,12 +31,24 @@
 [ext_resource type="PackedScene" path="res://src/buildings/production/HunterHut.tscn" id="26_hunter_hut"]
 [ext_resource type="PackedScene" path="res://src/buildings/production/StoneMine.tscn" id="27_stone_mine"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
-albedo_color = Color(0.2, 0.5, 0.2, 1)
+[ext_resource type="PackedScene" path="res://src/environment/Fire.tscn" id="28_fire"]
+
+[ext_resource type="Shader" path="res://src/environment/Terrain.gdshader" id="1_terrain_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_terrain"]
+render_priority = 0
+shader = ExtResource("1_terrain_shader")
+shader_parameter/grass_color = Color(0.2, 0.45, 0.15, 1)
+shader_parameter/dirt_color = Color(0.3, 0.2, 0.1, 1)
+shader_parameter/height_scale = 5.0
+shader_parameter/noise_scale = 0.05
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1"]
-material = SubResource("StandardMaterial3D_1")
+material = SubResource("ShaderMaterial_terrain")
 size = Vector2(500, 500)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(500, 1, 500)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 sky_top_color = Color(0.38, 0.58, 0.9, 1)
@@ -68,6 +80,9 @@ size = Vector3(500, 1, 500)
 
 [node name="root" type="Node3D"]
 script = ExtResource("1_main")
+TreeScene = ExtResource("7_tree")
+GrassScene = ExtResource("24_grass")
+RockScene = ExtResource("8_rock")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
@@ -91,6 +106,7 @@ FishingHutScene = ExtResource("22_fishing_hut")
 WoodcutterHutScene = ExtResource("25_woodcutter_hut")
 StoneMineScene = ExtResource("27_stone_mine")
 HunterHutScene = ExtResource("26_hunter_hut")
+FireScene = ExtResource("28_fire")
 GroundPath = NodePath("../Ground")
 
 [node name="AmbienceManager" type="Node" parent="."]

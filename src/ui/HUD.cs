@@ -199,6 +199,7 @@ public partial class HUD : CanvasLayer
 		}
 
 		UpdateDisplay();
+		UpdateButtons(); // Fix: Hide 'Build House' immediately
 		SelectCategory("General");
 	}
 
@@ -232,6 +233,9 @@ public partial class HUD : CanvasLayer
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatFood").Pressed += () => SelectCategory("Food");
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Pressed += () => SelectCategory("Tech");
 		
+		var catDisasterBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/CategoryBar/CatDisaster");
+		if (catDisasterBtn != null) catDisasterBtn.Pressed += () => SelectCategory("Disaster");
+		
 		var catZonesBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/CategoryBar/CatZones");
 		if (catZonesBtn != null) {
 			GD.Print("HUD: Found CatZones button, connecting...");
@@ -245,7 +249,6 @@ public partial class HUD : CanvasLayer
 
 		var btns = new Dictionary<string, string> {
 			// {"GeneralGroup/BuildRoad", null}, // Natural roads now!
-			{"GeneralGroup/BuildHouse", "House"},
 			{"GeneralGroup/BuildTownCenter", "TownCenter"},
 			{"FoodGroup/BuildMeatShop", "MeatShop"},
 			{"TechGroup/BuildStable", "HorseStable"},
@@ -255,7 +258,8 @@ public partial class HUD : CanvasLayer
 			{"FoodGroup/BuildWoodcutter", "WoodcutterHut"},
 			{"FoodGroup/BuildHunter", "HunterHut"},
 			{"FoodGroup/BuildWell", "Well"},
-			{"TechGroup/BuildStoneMine", "StoneMine"}
+			{"TechGroup/BuildStoneMine", "StoneMine"},
+			{"DisasterGroup/BuildFire", "Fire"}
 		};
 
 		foreach (var pair in btns)
@@ -319,6 +323,8 @@ public partial class HUD : CanvasLayer
 		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/TechGroup").Visible = (cat == "Tech");
 		var zonesGroup = GetNodeOrNull<Control>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup");
 		if (zonesGroup != null) zonesGroup.Visible = (cat == "Zones");
+		var disasterGroup = GetNodeOrNull<Control>("BottomBar/VBoxContainer/MarginContainer/DisasterGroup");
+		if (disasterGroup != null) disasterGroup.Visible = (cat == "Disaster");
 		
 		// Update category button appearance
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatGeneral").Modulate = (cat == "General") ? Colors.Yellow : Colors.White;
@@ -326,6 +332,29 @@ public partial class HUD : CanvasLayer
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Modulate = (cat == "Tech") ? Colors.Yellow : Colors.White;
 		var catZones = GetNodeOrNull<Button>("BottomBar/VBoxContainer/CategoryBar/CatZones");
 		if (catZones != null) catZones.Modulate = (cat == "Zones") ? Colors.Yellow : Colors.White;
+		var catDisaster = GetNodeOrNull<Button>("BottomBar/VBoxContainer/CategoryBar/CatDisaster");
+		if (catDisaster != null) catDisaster.Modulate = (cat == "Disaster") ? Colors.Yellow : Colors.White;
+		
+		// If switching categories, cancel any active placement/bulldoze mode
+		CancelPlacement();
+	}
+
+	public void CancelPlacement()
+	{
+		_isHouseMode = false;
+		_isRoadMode = false;
+		_isBulldozeMode = false;
+		_isZoningMode = false;
+		
+		if (_buildingManager != null)
+		{
+			_buildingManager.ToggleBuilding(false);
+			_buildingManager.SetBulldozeMode(false);
+			_buildingManager.SetZoneMode(false);
+		}
+		if (_roadManager != null) _roadManager.ToggleBuilding(false);
+		
+		UpdateButtons();
 	}
 
 	public override void _ExitTree()
@@ -356,6 +385,12 @@ public partial class HUD : CanvasLayer
 	private void OnBuildingSelected(string type)
 	{
 		GD.Print($"HUD: Building selected: {type}");
+		_isHouseMode = false;
+		_isRoadMode = false;
+		_isBulldozeMode = false;
+		_isZoningMode = false;
+		
+		GD.Print($"HUD: OnBuildingSelected - Type: {type}");
 		if (_buildingManager == null) 
 		{
 			GD.PrintErr("HUD: BuildingManager is null!");
@@ -469,10 +504,9 @@ public partial class HUD : CanvasLayer
 
 	private void UpdateButtons()
 	{
-		var btnGroups = new string[] {"GeneralGroup", "FoodGroup", "TechGroup"};
+		var btnGroups = new string[] {"GeneralGroup", "FoodGroup", "TechGroup", "DisasterGroup"};
 		var btnNames = new Dictionary<string, string> {
 			{"BuildRoad", "Build Road"},
-			{"BuildHouse", "Build House"},
 			{"BuildTownCenter", "Town Center"},
 			{"BuildMeatShop", "Meat Shop"},
 			{"BuildStable", "Stable"},
@@ -482,7 +516,8 @@ public partial class HUD : CanvasLayer
 			{"BuildWoodcutter", "Woodcutter Hut"},
 			{"BuildHunter", "Hunter Hut"},
 			{"BuildWell", "Well"},
-			{"BuildStoneMine", "Stone Mine"}
+			{"BuildStoneMine", "Stone Mine"},
+			{"BuildFire", "Fire Disaster"}
 		};
 
 		foreach (var group in btnGroups)
@@ -493,7 +528,6 @@ public partial class HUD : CanvasLayer
 				if (btn != null) btn.Text = pair.Value;
 			}
 		}
-
 		// Road button hidden
 		var roadBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/BuildRoad");
 		if (roadBtn != null) roadBtn.Visible = false;
@@ -511,6 +545,7 @@ public partial class HUD : CanvasLayer
 			else if (_currentBuildingType == "HunterHut") { btnKey = "Hunter"; group = "FoodGroup"; }
 			else if (_currentBuildingType == "MeatShop") group = "FoodGroup";
 			else if (_currentBuildingType == "Guild" || _currentBuildingType == "HorseStable") group = "TechGroup";
+			else if (_currentBuildingType == "Fire") group = "DisasterGroup";
 			
 			string btnPath = $"BottomBar/VBoxContainer/MarginContainer/{group}/Build{btnKey}";
 			var btn = GetNodeOrNull<Button>(btnPath);

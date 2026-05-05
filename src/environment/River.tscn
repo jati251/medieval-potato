@@ -1,9 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://river_waterways"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mc_water"]
-transparency = 1
-albedo_color = Color(0.2, 0.4, 0.8, 0.6)
-render_priority = 1
+[ext_resource type="Script" uid="uid://bbfo2nee8nobi" path="res://addons/waterways_net/RiverManager.cs" id="1_river_manager"]
+[ext_resource type="Script" uid="uid://rln32gojxtx0" path="res://addons/waterways_net/Data/RiverShaderSettings.cs" id="2_shader_settings"]
+[ext_resource type="Script" path="res://src/environment/RiverBridge.cs" id="3_bridge"]
 
 [sub_resource type="Curve3D" id="Curve3D_river"]
 _data = {
@@ -12,26 +11,15 @@ _data = {
 }
 point_count = 5
 
+[sub_resource type="Resource" id="Resource_shader"]
+script = ExtResource("2_shader_settings")
+
 [node name="RiverSystem" type="Node3D"]
+script = ExtResource("3_bridge")
 
-[node name="RiverMesh" type="CSGPolygon3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
-calculate_tangents = false
-use_collision = true
-collision_layer = 2
-collision_mask = 0
-polygon = PackedVector2Array(-8, -0.5, 8, -0.5, 8, 0.1, -8, 0.1)
-mode = 2
-path_node = NodePath("../Path3D")
-path_interval_type = 0
-path_interval = 2.0
-path_simplify_angle = 0.0
-path_rotation = 2
-path_local = true
-path_continuous_u = true
-path_u_distance = 1.0
-path_joined = false
-material = SubResource("StandardMaterial3D_mc_water")
-
-[node name="Path3D" type="Path3D" parent="."]
-curve = SubResource("Curve3D_river")
+[node name="RiverManager" type="Node3D" parent="."]
+script = ExtResource("1_river_manager")
+PointWidths = Array[float]([8.0, 8.0, 8.0, 8.0, 8.0])
+Curve = SubResource("Curve3D_river")
+ShaderSettings = SubResource("Resource_shader")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
