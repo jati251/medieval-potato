@@ -11,6 +11,7 @@ public partial class GlobalSimulation : Node
 	[Export] public int UnemployedPopulation { get; set; } = 0;
 	[Export] public float Food { get; set; } = 100.0f;
 	[Export] public float Wood { get; set; } = 100.0f;
+	[Export] public float Stone { get; set; } = 50.0f;
 	[Export] public float StorageCapacity { get; set; } = 500.0f;
 	
 	// --- Simulation Settings ---
@@ -97,6 +98,7 @@ public partial class GlobalSimulation : Node
 	{
 		var saveData = new Godot.Collections.Dictionary<string, Variant>();
 		saveData["Wood"] = Wood;
+		saveData["Stone"] = Stone;
 		saveData["Food"] = Food;
 		saveData["Population"] = Population;
 
@@ -143,6 +145,7 @@ public partial class GlobalSimulation : Node
 		var saveData = jsonVar.AsGodotDictionary<string, Variant>();
 
 		Wood = (float)saveData["Wood"];
+		Stone = saveData.ContainsKey("Stone") ? (float)saveData["Stone"] : 0.0f;
 		Food = (float)saveData["Food"];
 		Population = 0; 
 
@@ -181,6 +184,7 @@ public partial class GlobalSimulation : Node
 		if (name.Contains("Forager")) return "ForagerHut";
 		if (name.Contains("Fishing")) return "FishingHut";
 		if (name.Contains("Woodcutter")) return "WoodcutterHut";
+		if (name.Contains("StoneMine")) return "StoneMine";
 		if (name.Contains("Hunter")) return "HunterHut";
 		return "";
 	}

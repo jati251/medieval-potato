@@ -76,6 +76,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Wood: 50"
 
+[node name="StoneLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Stone: 0"
+
 
 [node name="BottomBar" type="Panel" parent="."]
 anchors_preset = 12
@@ -154,24 +159,6 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "BULLDOZE"
 
-[node name="ZonesGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
-
-[node name="ZoneRes" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/ZonesGroup"]
-custom_minimum_size = Vector2(120, 50)
-layout_mode = 2
-size_flags_vertical = 4
-text = "ZONE RES"
-
-[node name="EraseZone" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/ZonesGroup"]
-custom_minimum_size = Vector2(120, 50)
-layout_mode = 2
-size_flags_vertical = 4
-text = "DELETE ZONE"
-
 [node name="FoodGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
 visible = false
 layout_mode = 2
@@ -231,3 +218,27 @@ custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 size_flags_vertical = 4
 text = "Stable"
+
+[node name="BuildStoneMine" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/TechGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Stone Mine"
+
+[node name="ZonesGroup" type="HBoxContainer" parent="BottomBar/VBoxContainer/MarginContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="ZoneRes" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/ZonesGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Paint Zone"
+
+[node name="EraseZone" type="Button" parent="BottomBar/VBoxContainer/MarginContainer/ZonesGroup"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+size_flags_vertical = 4
+text = "Erase Zone"

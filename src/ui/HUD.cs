@@ -7,6 +7,7 @@ public partial class HUD : CanvasLayer
 	private Label _popLabel;
 	private Label _foodLabel;
 	private Label _woodLabel;
+	private Label _stoneLabel;
 	private GlobalSimulation _sim;
 	private RoadManager _roadManager;
 	private BuildingManager _buildingManager;
@@ -69,6 +70,10 @@ public partial class HUD : CanvasLayer
 		else if (name.Contains("Woodcutter"))
 		{
 			info = "[ PRODUCTION ]\nHarvesting Trees\nWorkers: 2\nStatus: Active";
+		}
+		else if (name.Contains("StoneMine"))
+		{
+			info = "[ PRODUCTION ]\nMining Stone\nWorkers: 2\nStatus: Active";
 		}
 		else if (name.Contains("Forager"))
 		{
@@ -177,6 +182,7 @@ public partial class HUD : CanvasLayer
 		_popLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/PopLabel");
 		_foodLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/FoodLabel");
 		_woodLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/WoodLabel");
+		_stoneLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/StoneLabel");
 
 		// Managers
 		_roadManager = GetTree().Root.FindChild("RoadManager", true, false) as RoadManager;
@@ -220,11 +226,22 @@ public partial class HUD : CanvasLayer
 
 	private void SetupButtonHandlers()
 	{
+		GD.Print("HUD: SetupButtonHandlers START");
 		// Category Buttons
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatGeneral").Pressed += () => SelectCategory("General");
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatFood").Pressed += () => SelectCategory("Food");
 		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatTech").Pressed += () => SelectCategory("Tech");
-		GetNode<Button>("BottomBar/VBoxContainer/CategoryBar/CatZones").Pressed += () => SelectCategory("Zones");
+		
+		var catZonesBtn = GetNodeOrNull<Button>("BottomBar/VBoxContainer/CategoryBar/CatZones");
+		if (catZonesBtn != null) {
+			GD.Print("HUD: Found CatZones button, connecting...");
+			catZonesBtn.Pressed += () => {
+				GD.Print("HUD: CatZones button Pressed!");
+				SelectCategory("Zones");
+			};
+		} else {
+			GD.PrintErr("HUD: CatZones button NOT FOUND in HUD.tscn!");
+		}
 
 		var btns = new Dictionary<string, string> {
 			// {"GeneralGroup/BuildRoad", null}, // Natural roads now!
@@ -237,7 +254,8 @@ public partial class HUD : CanvasLayer
 			{"FoodGroup/BuildFishing", "FishingHut"},
 			{"FoodGroup/BuildWoodcutter", "WoodcutterHut"},
 			{"FoodGroup/BuildHunter", "HunterHut"},
-			{"FoodGroup/BuildWell", "Well"}
+			{"FoodGroup/BuildWell", "Well"},
+			{"TechGroup/BuildStoneMine", "StoneMine"}
 		};
 
 		foreach (var pair in btns)
@@ -261,11 +279,25 @@ public partial class HUD : CanvasLayer
 		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup/Bulldoze") is Button bulldozeBtn)
 			bulldozeBtn.Pressed += OnBulldozeButtonPressed;
 
-		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/ZoneRes") is Button zoneBtn)
-			zoneBtn.Pressed += () => OnZoneButtonPressed(false);
+		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/ZoneRes") is Button zoneBtn) {
+			GD.Print("HUD: Found ZoneRes button!");
+			zoneBtn.Pressed += () => {
+				GD.Print("HUD: ZoneRes button Pressed!");
+				OnZoneButtonPressed(false);
+			};
+		} else {
+			GD.PrintErr("HUD: ZoneRes button NOT FOUND!");
+		}
 
-		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/EraseZone") is Button eraseZoneBtn)
-			eraseZoneBtn.Pressed += () => OnZoneButtonPressed(true);
+		if (GetNodeOrNull<Button>("BottomBar/VBoxContainer/MarginContainer/ZonesGroup/EraseZone") is Button eraseZoneBtn) {
+			GD.Print("HUD: Found EraseZone button!");
+			eraseZoneBtn.Pressed += () => {
+				GD.Print("HUD: EraseZone button Pressed!");
+				OnZoneButtonPressed(true);
+			};
+		} else {
+			GD.PrintErr("HUD: EraseZone button NOT FOUND!");
+		}
 
 		if (GetNodeOrNull<Button>("BuildingInfoPopup/Panel/VBoxContainer/CloseButton") is Button b) b.Pressed += OnClosePopup;
 
@@ -276,10 +308,12 @@ public partial class HUD : CanvasLayer
 				speedBtn.Pressed += () => SetGameSpeed(s);
 			}
 		}
+		GD.Print("HUD: SetupButtonHandlers END");
 	}
 
 	private void SelectCategory(string cat)
 	{
+		GD.Print($"HUD: Selecting Category: {cat}");
 		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/GeneralGroup").Visible = (cat == "General");
 		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/FoodGroup").Visible = (cat == "Food");
 		GetNode<Control>("BottomBar/VBoxContainer/MarginContainer/TechGroup").Visible = (cat == "Tech");
@@ -447,7 +481,8 @@ public partial class HUD : CanvasLayer
 			{"BuildFishing", "Fishing Hut"},
 			{"BuildWoodcutter", "Woodcutter Hut"},
 			{"BuildHunter", "Hunter Hut"},
-			{"BuildWell", "Well"}
+			{"BuildWell", "Well"},
+			{"BuildStoneMine", "Stone Mine"}
 		};
 
 		foreach (var group in btnGroups)
@@ -472,6 +507,7 @@ public partial class HUD : CanvasLayer
 			if (_currentBuildingType == "ForagerHut") { btnKey = "Forager"; group = "FoodGroup"; }
 			else if (_currentBuildingType == "FishingHut") { btnKey = "Fishing"; group = "FoodGroup"; }
 			else if (_currentBuildingType == "WoodcutterHut") { btnKey = "Woodcutter"; group = "FoodGroup"; }
+			else if (_currentBuildingType == "StoneMine") { btnKey = "StoneMine"; group = "TechGroup"; }
 			else if (_currentBuildingType == "HunterHut") { btnKey = "Hunter"; group = "FoodGroup"; }
 			else if (_currentBuildingType == "MeatShop") group = "FoodGroup";
 			else if (_currentBuildingType == "Guild" || _currentBuildingType == "HorseStable") group = "TechGroup";
@@ -533,6 +569,7 @@ public partial class HUD : CanvasLayer
 		
 		if (_foodLabel != null) _foodLabel.Text = $"Food: {_sim.Food:F1}";
 		if (_woodLabel != null) _woodLabel.Text = $"Wood: {_sim.Wood:F0}";
+		if (_stoneLabel != null) _stoneLabel.Text = $"Stone: {_sim.Stone:F0}";
 
 		// Update popup info if visible
 		if (_infoPopup != null && _infoPopup.Visible)

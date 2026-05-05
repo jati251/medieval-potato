@@ -11,6 +11,7 @@ public partial class BuildingManager : Node3D
 	[Export] public PackedScene ForagerHutScene { get; set; }
 	[Export] public PackedScene FishingHutScene { get; set; }
 	[Export] public PackedScene WoodcutterHutScene { get; set; }
+	[Export] public PackedScene StoneMineScene { get; set; }
 	[Export] public PackedScene HunterHutScene { get; set; }
 	[Export] public PackedScene WellScene { get; set; }
 	[Export] public NodePath GroundPath { get; set; }
@@ -102,6 +103,7 @@ public partial class BuildingManager : Node3D
 		    name.Contains("Forager") ||
 		    name.Contains("Fishing") ||
 		    name.Contains("Woodcutter") ||
+		    name.Contains("StoneMine") ||
 		    name.Contains("Hunter") ||
 		    name.Contains("Well"))
 		{
@@ -128,6 +130,7 @@ public partial class BuildingManager : Node3D
 			case "ForagerHut": _currentScene = ForagerHutScene; break;
 			case "FishingHut": _currentScene = FishingHutScene; break;
 			case "WoodcutterHut": _currentScene = WoodcutterHutScene; break;
+			case "StoneMine": _currentScene = StoneMineScene; break;
 			case "HunterHut": _currentScene = HunterHutScene; break;
 			case "Well": _currentScene = WellScene; break;
 		}
@@ -484,6 +487,7 @@ public partial class BuildingManager : Node3D
 		else if (building is ForagerHut) title = "Forager Hut";
 		else if (building is FishingHut) title = "Fishing Hut";
 		else if (building is WoodcutterHut) title = "Woodcutter Hut";
+		else if (building is StoneMine) title = "Stone Mine";
 		else if (building is HunterHut) title = "Hunter Hut";
 		else if (building is Well) title = "Water Well";
 		else title = building.Name.ToString();
@@ -661,6 +665,8 @@ public partial class BuildingManager : Node3D
 			case "Guild": scene = BuilderGuildScene; break;
 			case "ForagerHut": scene = ForagerHutScene; break;
 			case "FishingHut": scene = FishingHutScene; break;
+			case "WoodcutterHut": scene = WoodcutterHutScene; break;
+			case "StoneMine": scene = StoneMineScene; break;
 			case "HunterHut": scene = HunterHutScene; break;
 			case "Well": scene = WellScene; break;
 		}

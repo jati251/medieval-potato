@@ -1,4 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://bv8v7u7u7u7u7"]
+
+[ext_resource type="Script" path="res://src/environment/Rock.cs" id="1_rock"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Rock"]
 albedo_color = Color(0.4, 0.4, 0.45, 1)
@@ -10,8 +12,19 @@ height = 1.2
 radial_segments = 8
 rings = 4
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_Rock"]
+radius = 0.8
+
 [node name="Rock" type="Node3D"]
+script = ExtResource("1_rock")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 mesh = SubResource("SphereMesh_Rock")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("SphereShape3D_Rock")

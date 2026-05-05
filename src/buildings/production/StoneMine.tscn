@@ -1,0 +1,54 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/buildings/production/StoneMine.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/agents/core/VisualPop.tscn" id="2_miner"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_Stone"]
+albedo_color = Color(0.4, 0.4, 0.45, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_Stone"]
+material = SubResource("StandardMaterial3D_Stone")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_DarkStone"]
+albedo_color = Color(0.2, 0.2, 0.25, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_Support"]
+material = SubResource("StandardMaterial3D_DarkStone")
+top_radius = 0.1
+bottom_radius = 0.1
+height = 1.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_Mine"]
+size = Vector3(2.5, 2.0, 2.5)
+
+[node name="StoneMine" type="StaticBody3D"]
+script = ExtResource("1_script")
+MinerScene = ExtResource("2_miner")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(2, 0, 0, 0, 0.5, 0, 0, 0, 2, 0, 0.25, 0)
+mesh = SubResource("BoxMesh_Stone")
+
+[node name="Structure" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.5, 0, 0, 0, 1.2, 0, 0, 0, 1.5, 0, 1.1, 0)
+mesh = SubResource("BoxMesh_Stone")
+
+[node name="Support1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.75, 0.8)
+mesh = SubResource("CylinderMesh_Support")
+
+[node name="Support2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.75, 0.8)
+mesh = SubResource("CylinderMesh_Support")
+
+[node name="Support3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.75, -0.8)
+mesh = SubResource("CylinderMesh_Support")
+
+[node name="Support4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.75, -0.8)
+mesh = SubResource("CylinderMesh_Support")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("BoxShape3D_Mine")
