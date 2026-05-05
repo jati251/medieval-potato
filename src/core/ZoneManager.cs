@@ -13,6 +13,8 @@ public partial class ZoneManager : Node3D
 	private List<Vector2I> _activeZones = new List<Vector2I>();
 
 	private bool _isPainting = false;
+	private bool _visualsDirty = false;
+
 	public bool IsPainting 
 	{ 
 		get => _isPainting; 
@@ -88,11 +90,11 @@ void fragment() {
 					if (!_residentialZones.ContainsKey(coords) || !_residentialZones[coords])
 					{
 						_residentialZones[coords] = true;
+						_visualsDirty = true;
 					}
 				}
 			}
 		}
-		UpdateVisuals();
 	}
 
 	public void EraseZone(Vector3 worldPos)
@@ -105,14 +107,23 @@ void fragment() {
 				if (offset.Length() <= BrushRadius)
 				{
 					Vector2I coords = WorldToGrid(worldPos + offset);
-					if (_residentialZones.ContainsKey(coords))
+					if (_residentialZones.ContainsKey(coords) && _residentialZones[coords])
 					{
 						_residentialZones[coords] = false;
+						_visualsDirty = true;
 					}
 				}
 			}
 		}
-		UpdateVisuals();
+	}
+
+	public override void _Process(double delta)
+	{
+		if (_visualsDirty)
+		{
+			UpdateVisuals();
+			_visualsDirty = false;
+		}
 	}
 
 	private void UpdateVisuals()
@@ -204,25 +215,15 @@ void fragment() {
 
 	private bool IsNearWell(Vector3 pos)
 	{
-		var buildings = GetTree().GetNodesInGroup("Buildings");
-		bool foundAnyWell = false;
-		foreach (Node b in buildings)
+		var wells = GetTree().GetNodesInGroup("Wells");
+		foreach (Node b in wells)
 		{
-			string name = b.Name.ToString().ToLower();
-			// Robust check: contains "well" OR is a Well type OR belongs to a well-related group
-			bool isWell = name.Contains("well") || b is Well || b.IsInGroup("Wells");
-			
-			if (isWell && b is Node3D b3d)
+			if (b is Node3D b3d)
 			{
-				foundAnyWell = true;
 				float dist = pos.DistanceTo(b3d.GlobalPosition);
 				if (dist < 60.0f) // Increased radius to 60.0f
 					return true;
 			}
-		}
-		
-		if (!foundAnyWell) {
-			GD.Print("ZoneManager: ALERT - No Wells found in 'Buildings' group!");
 		}
 		return false;
 	}

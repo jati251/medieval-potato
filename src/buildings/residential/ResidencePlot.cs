@@ -45,6 +45,14 @@ public partial class ResidencePlot : Node3D
 		if (!IsPreview)
 		{
 			_sim.RegisterConstructionSite(this);
+			
+			var timeMgr = GetNodeOrNull<TimeManager>("/root/TimeManager");
+			if (timeMgr != null)
+			{
+				timeMgr.DayNightChanged += OnDayNightChanged;
+				// Initial state
+				OnDayNightChanged(timeMgr.IsNight);
+			}
 		}
 	}
 
@@ -107,26 +115,17 @@ public partial class ResidencePlot : Node3D
 		if (_scaffolding != null) _scaffolding.Visible = !IsConstructed;
 	}
 
-	public override void _Process(double delta)
+	private void OnDayNightChanged(bool isNight)
 	{
-		if (!IsConstructed) return;
-
-		var timeMgr = GetNodeOrNull<TimeManager>("/root/TimeManager");
-		if (timeMgr != null)
+		var light = GetNodeOrNull<OmniLight3D>("Visuals/NightLight");
+		if (light != null)
 		{
-			var light = GetNodeOrNull<OmniLight3D>("Visuals/NightLight");
-			if (light != null)
-			{
-				// Lights on from 18:00 to 06:00
-				bool isNight = timeMgr.TimeOfDay >= 18.5f || timeMgr.TimeOfDay <= 5.5f;
-				light.Visible = isNight;
-				
-				// Toggle windows too
-				var w1 = GetNodeOrNull<MeshInstance3D>("Visuals/Window1");
-				var w2 = GetNodeOrNull<MeshInstance3D>("Visuals/Window2");
-				if (w1 != null) w1.Visible = isNight;
-				if (w2 != null) w2.Visible = isNight;
-			}
+			light.Visible = isNight;
+			
+			var w1 = GetNodeOrNull<MeshInstance3D>("Visuals/Window1");
+			var w2 = GetNodeOrNull<MeshInstance3D>("Visuals/Window2");
+			if (w1 != null) w1.Visible = isNight;
+			if (w2 != null) w2.Visible = isNight;
 		}
 	}
 
@@ -187,16 +186,12 @@ public partial class ResidencePlot : Node3D
 
 	private bool IsNearWell()
 	{
-		var buildings = GetTree().GetNodesInGroup("Buildings");
-		foreach (Node b in buildings)
+		var wells = GetTree().GetNodesInGroup("Wells");
+		foreach (Node b in wells)
 		{
-			// More robust check
-			string name = b.Name.ToString().ToLower();
-			bool isWell = name.Contains("well") || b.IsInGroup("Wells");
-			
-			if (isWell && b is Node3D b3d)
+			if (b is Node3D b3d)
 			{
-				if (GlobalPosition.DistanceTo(b3d.GlobalPosition) < 45.0f) // Increased from 15.0 to 45.0
+				if (GlobalPosition.DistanceTo(b3d.GlobalPosition) < 45.0f) 
 					return true;
 			}
 		}

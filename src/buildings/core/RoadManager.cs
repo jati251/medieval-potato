@@ -18,6 +18,9 @@ public partial class RoadManager : Node3D
 
 	private MultiMeshInstance3D _multiMesh;
 	private GlobalSimulation _sim;
+	
+	private Dictionary<string, Vector3[]> _pathCache = new Dictionary<string, Vector3[]>();
+	private const int MAX_CACHE_SIZE = 100;
 
 	public override void _Ready()
 	{
@@ -29,6 +32,25 @@ public partial class RoadManager : Node3D
 
 		SetupMultiMesh();
 		SetupAStar();
+
+		// Footprint timer for batch processing
+		var footprintTimer = new Timer();
+		footprintTimer.WaitTime = 0.5f;
+		footprintTimer.Autostart = true;
+		footprintTimer.Timeout += ProcessAllFootprints;
+		AddChild(footprintTimer);
+	}
+
+	private void ProcessAllFootprints()
+	{
+		var pops = GetTree().GetNodesInGroup("VisualPops");
+		foreach (Node p in pops)
+		{
+			if (p is Node3D pop3d)
+			{
+				RegisterFootprint(pop3d.GlobalPosition);
+			}
+		}
 	}
 
 	private void SetupMultiMesh()
@@ -114,6 +136,7 @@ public partial class RoadManager : Node3D
 		{
 			float weight = Mathf.Max(0.3f, 1.0f - (usage / 15.0f));
 			_astarGrid.SetPointWeightScale(coords, weight);
+			_pathCache.Clear(); // Invalidate paths when grid changes
 		}
 
 		if (usage >= UsageThreshold)
@@ -154,6 +177,7 @@ public partial class RoadManager : Node3D
 		{
 			_heatmap.Remove(key);
 			_astarGrid.SetPointWeightScale(key, 1.0f);
+			_pathCache.Clear(); // Invalidate paths when grid changes
 			RemoveTileVisual(key);
 		}
 	}
@@ -218,6 +242,9 @@ public partial class RoadManager : Node3D
 		endGrid.X = Mathf.Clamp(endGrid.X, _gridRegion.Position.X, _gridRegion.End.X - 1);
 		endGrid.Y = Mathf.Clamp(endGrid.Y, _gridRegion.Position.Y, _gridRegion.End.Y - 1);
 
+		string cacheKey = $"{startGrid.X}_{startGrid.Y}_{endGrid.X}_{endGrid.Y}";
+		if (_pathCache.ContainsKey(cacheKey)) return _pathCache[cacheKey];
+
 		var path = _astarGrid.GetIdPath(startGrid, endGrid);
 		
 		List<Vector3> worldPath = new List<Vector3>();
@@ -228,7 +255,13 @@ public partial class RoadManager : Node3D
 		}
 		worldPath.Add(end);
 
-		return worldPath.ToArray();
+		Vector3[] finalPath = worldPath.ToArray();
+		
+		// Manage cache size
+		if (_pathCache.Count >= MAX_CACHE_SIZE) _pathCache.Clear();
+		_pathCache[cacheKey] = finalPath;
+
+		return finalPath;
 	}
 
 	private Vector2I WorldToGrid(Vector3 pos)

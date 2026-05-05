@@ -103,20 +103,19 @@ public partial class GlobalSimulation : Node
 		saveData["Population"] = Population;
 
 		var buildingsList = new Godot.Collections.Array<Godot.Collections.Dictionary<string, Variant>>();
-		var root = GetTree().CurrentScene;
-		if (root == null) return;
 		
-		foreach (Node child in root.GetChildren())
+		var buildings = GetTree().GetNodesInGroup("Buildings");
+		foreach (Node b in buildings)
 		{
-			string type = GetBuildingType(child);
+			string type = GetBuildingType(b);
 			if (type != "")
 			{
 				var bData = new Godot.Collections.Dictionary<string, Variant>();
 				bData["Type"] = type;
-				bData["PosX"] = ((Node3D)child).GlobalPosition.X;
-				bData["PosY"] = ((Node3D)child).GlobalPosition.Y;
-				bData["PosZ"] = ((Node3D)child).GlobalPosition.Z;
-				bData["RotY"] = ((Node3D)child).GlobalRotation.Y;
+				bData["PosX"] = ((Node3D)b).GlobalPosition.X;
+				bData["PosY"] = ((Node3D)b).GlobalPosition.Y;
+				bData["PosZ"] = ((Node3D)b).GlobalPosition.Z;
+				bData["RotY"] = ((Node3D)b).GlobalRotation.Y;
 				buildingsList.Add(bData);
 			}
 		}
@@ -155,11 +154,9 @@ public partial class GlobalSimulation : Node
 		var buildingMgr = root.GetNodeOrNull<BuildingManager>("BuildingManager");
 		if (buildingMgr == null) return;
 		
-		// Clear existing buildings
-		foreach (Node child in root.GetChildren())
-		{
-			if (GetBuildingType(child) != "") child.QueueFree();
-		}
+		// Clear existing buildings using Group for performance
+		var existing = GetTree().GetNodesInGroup("Buildings");
+		foreach (Node b in existing) b.QueueFree();
 
 		var buildingsArray = saveData["Buildings"].AsGodotArray<Godot.Collections.Dictionary<string, Variant>>();
 		foreach (var b in buildingsArray)

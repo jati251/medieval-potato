@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class BuildingManager : Node3D
 {
@@ -28,6 +29,9 @@ public partial class BuildingManager : Node3D
 	private StandardMaterial3D _highlightMaterial;
 	private ZoneManager _zoneManager;
 	private MeshInstance3D _zoneBrushPreview;
+	private List<MeshInstance3D> _previewMeshes = new List<MeshInstance3D>();
+	private bool _lastCanPlace = true;
+	private Vector2 _lastMousePos = Vector2.Zero;
 
 	public override void _Ready()
 	{
@@ -109,6 +113,7 @@ public partial class BuildingManager : Node3D
 		{
 			SetCollisionLayerRecursively(node, 8);
 			node.AddToGroup("Buildings");
+			if (name.Contains("Well")) node.AddToGroup("Wells");
 		}
 
 		foreach (Node child in node.GetChildren())
@@ -208,16 +213,29 @@ public partial class BuildingManager : Node3D
 				if (previewProp != null) previewProp.SetValue(_previewHouse, true);
 
 				AddChild(_previewHouse);
+				
+				// Cache meshes for fast highlighting
+				_previewMeshes.Clear();
+				CacheMeshesRecursively(_previewHouse, _previewMeshes);
+
 				// CRITICAL: Disable all collisions on preview to prevent flicker!
 				DisableCollisionRecursively(_previewHouse);
 				GD.Print("BuildingManager: Preview instantiated and added to tree.");
 			}
 			_previewHouse.Visible = true;
+			_lastCanPlace = true; // Reset
 		}
 		else if (_previewHouse != null)
 		{
 			_previewHouse.Visible = false;
+			_previewMeshes.Clear();
 		}
+	}
+
+	private void CacheMeshesRecursively(Node node, List<MeshInstance3D> list)
+	{
+		if (node is MeshInstance3D mi) list.Add(mi);
+		foreach (Node child in node.GetChildren()) CacheMeshesRecursively(child, list);
 	}
 
 	private void DisableCollisionRecursively(Node node)
@@ -262,13 +280,13 @@ public partial class BuildingManager : Node3D
 				bool canPlace = isSurfaceValid && isMapBorderValid && isWaterValid && isRequirementMet && isSpotFree;
 				
 				_previewHouse.Visible = true;
-				if (canPlace)
+				if (canPlace != _lastCanPlace)
 				{
-					RemoveHighlightRecursively(_previewHouse);
-				}
-				else
-				{
-					ApplyHoverHighlight(_previewHouse);
+					_lastCanPlace = canPlace;
+					foreach (var mi in _previewMeshes)
+					{
+						mi.MaterialOverlay = canPlace ? null : _highlightMaterial;
+					}
 				}
 			}
 		}
@@ -326,6 +344,10 @@ public partial class BuildingManager : Node3D
 
 	private void UpdateBulldozeHover()
 	{
+		Vector2 mousePos = GetViewport().GetMousePosition();
+		if (mousePos.DistanceTo(_lastMousePos) < 1.0f) return;
+		_lastMousePos = mousePos;
+
 		Node3D building = GetBuildingUnderMouse();
 		if (building != _hoveredBuilding)
 		{
@@ -564,6 +586,7 @@ public partial class BuildingManager : Node3D
 		// Move to Layer 4 (bit mask 8)
 		SetCollisionLayerRecursively(building, 8);
 		building.AddToGroup("Buildings");
+		if (_currentScene == WellScene) building.AddToGroup("Wells");
 		
 		// Gravity Snap
 		float groundY = GetGroundYAt(position);
@@ -679,6 +702,7 @@ public partial class BuildingManager : Node3D
 		building.GlobalRotation = new Vector3(0, rotation, 0);
 		SetCollisionLayerRecursively(building, 8);
 		building.AddToGroup("Buildings");
+		if (type.Contains("Well")) building.AddToGroup("Wells");
 	}
 
 	public bool IsSpotOccupied(Vector3 position, float radius)

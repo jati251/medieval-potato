@@ -5,8 +5,11 @@ public partial class TimeManager : Node
 {
     [Export] public float DayDurationSeconds { get; set; } = 120.0f; // 2 minutes for a full day
     
+    [Signal] public delegate void DayNightChangedEventHandler(bool isNight);
+
     public float TimeOfDay { get; private set; } = 8.0f; // Start at 8 AM
     public int DayCount { get; private set; } = 1;
+    public bool IsNight { get; private set; } = false;
 
     private DirectionalLight3D _sun;
     private WorldEnvironment _environment;
@@ -43,8 +46,16 @@ public partial class TimeManager : Node
         _sun.RotationDegrees = new Vector3(-angle, 170.0f, 0);
 
         // Adjust energy based on time
+        bool wasNight = IsNight;
+        IsNight = TimeOfDay >= 18.5f || TimeOfDay <= 5.5f;
+
+        if (IsNight != wasNight)
+        {
+            EmitSignal(SignalName.DayNightChanged, IsNight);
+        }
+
         float energy = 0.0f;
-        if (TimeOfDay > 5.5f && TimeOfDay < 18.5f) // Daytime
+        if (!IsNight) // Daytime
         {
             energy = Mathf.Clamp(Mathf.Sin((TimeOfDay - 6.0f) / 12.0f * Mathf.Pi), 0.0f, 1.0f);
         }
